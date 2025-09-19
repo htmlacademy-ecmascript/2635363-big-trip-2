@@ -1,7 +1,7 @@
 # Проект «Большое путешествие»
 
 * Студент: [Виталий Иванов](https://up.htmlacademy.ru/ecmascript-individual/2/user/2635363).
-* Наставник: `Неизвестно`.
+* Наставник: [Станислав Михайлов](https://htmlacademy.ru/profile/id139638).
 
 ---
 
