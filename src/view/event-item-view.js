@@ -1,50 +1,77 @@
-import { createElement } from '../render.js';
+import { createElement } from '../utils/render';
+export default class EventItemView {
+  constructor(point, destination, offers) {
+    this.point = point;
+    this.destination = destination;
+    this.offers = offers;
+    this.element = null;
+  }
 
-function createEventItemTemplate() {
-  return `
+  getTemplate() {
+    const { point, destination, offers } = this;
+
+    return `
     <li class="trip-events__item">
       <div class="event">
-        <time class="event__date" datetime="2019-03-18">MAR 18</time>
+        <time class="event__date" datetime=${point.dateFrom}>${this._formatDate(point.dateFrom)}</time>
         <div class="event__type">
-          <img class="event__type-icon" width="42" height="42" src="img/icons/taxi.png" alt="Event type icon">
+          <img class="event__type-icon" width="42" height="42" src="img/icons/${point.type}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">Taxi Amsterdam</h3>
+        <h3 class="event__title">${point.type.charAt(0).toUpperCase() + point.type.slice(1)} ${destination.name}</h3>
         <div class="event__schedule">
           <p class="event__time">
-            <time class="event__start-time" datetime="2019-03-18T10:30">10:30</time>
+            <time class="event__start-time" datetime="${point.dateFrom}">${this._formatTime(point.dateFrom)}</time>
             &mdash;
-            <time class="event__end-time" datetime="2019-03-18T11:00">11:00</time>
+            <time class="event__end-time" datetime="${point.dateTo}">${this._formatTime(point.dateTo)}</time>
           </p>
-          <p class="event__duration">30M</p>
+          <p class="event__duration">${this._getDuration(point.dateFrom, point.dateTo)}</p>
         </div>
         <p class="event__price">
-          &euro;&nbsp;<span class="event__price-value">20</span>
+          &euro;&nbsp;<span class="event__price-value">${point.basePrice}</span>
         </p>
+        ${offers.length > 0 ? `
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">
-          <li class="event__offer">
-            <span class="event__offer-title">Order Uber</span>
-            &plus;&euro;&nbsp;
-            <span class="event__offer-price">20</span>
-          </li>
-        </ul>
-        <button class="event__favorite-btn event__favorite-btn--active" type="button">
-          <span class="visually-hidden">Add to favorite</span>
-          <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
-            <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z" />
-          </svg>
-        </button>
+            ${offers.map((o) => `
+              <li class="event__offer">
+                <span class="event__offer-title">${o.title}</span>
+                &plus;&euro;&nbsp;
+                <span class="event__offer-price">${o.price}</span>
+              </li>`).join('')}
+          </ul>` : ''}
+          <button class="event__favorite-btn ${point.isFavorite ? 'event__favorite-btn--active' : ''}" type="button">
+            <span class="visually-hidden">Add to favorite</span>
+            <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
+              <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z" />
+            </svg>
+          </button>
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Open event</span>
         </button>
       </div>
     </li>
     `;
-}
+  }
 
-export default class EventItemView {
-  getTemplate() {
-    return createEventItemTemplate();
+  _formatDate(date) {
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toUpperCase();
+  }
+
+  _formatTime(date) {
+    const d = new Date(date);
+    return d.toTimeString().slice(0, 5);
+  }
+
+  _getDuration(start, end) {
+    const ms = new Date(end) - new Date(start);
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return `${hours}H ${minutes}M`;
+    }
+    return `${minutes}M`;
   }
 
   getElement() {

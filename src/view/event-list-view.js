@@ -1,4 +1,4 @@
-import { createElement } from '../render';
+import { createElement } from '../utils/render';
 
 function createEventListItemTemplate() {
   return `
