@@ -1,7 +1,6 @@
-import { createElement } from '../utils/render';
+import AbstractView from '../framework/view/abstract-view.js';
 
 function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
-  // Генерация радиокнопок типов событий
   const typeItems = allTypes.map((type) => `
     <div class="event__type-item">
       <input
@@ -105,7 +104,6 @@ function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
   `;
 }
 
-// Вспомогательная функция для форматирования даты
 function formatDateTime(date) {
   const d = new Date(date);
   const day = String(d.getDate()).padStart(2, '0');
@@ -116,32 +114,34 @@ function formatDateTime(date) {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
-export default class FormEditPointView {
+export default class FormEditPointView extends AbstractView {
+  #point;
+  #destination;
+  #offers;
+  #allTypes;
+
   constructor({ point, destination, offers, allTypes }) {
-    this.point = point;
-    this.destination = destination;
-    this.offers = offers;
-    this.allTypes = allTypes;
-    this.element = null;
+    super();
+    this.#point = point;
+    this.#destination = destination;
+    this.#offers = offers;
+    this.#allTypes = allTypes;
   }
 
-  getTemplate() {
+  get template() {
     return createFormEditPointTemplate({
-      point: this.point,
-      destination: this.destination,
-      offers: this.offers,
-      allTypes: this.allTypes
+      point: this.#point,
+      destination: this.#destination,
+      offers: this.#offers,
+      allTypes: this.#allTypes
     });
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
+  setFormSubmitHandler(callback) {
+    this.element.querySelector('form').addEventListener('submit', callback);
   }
 
-  removeElement() {
-    this.element = null;
+  setCollapseClickHandler(callback) {
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', callback);
   }
 }
