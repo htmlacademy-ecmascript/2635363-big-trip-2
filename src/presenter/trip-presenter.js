@@ -5,8 +5,12 @@ import EventItemView from '../view/event-item-view.js';
 import ListEmptyView from '../view/list-empty-view.js';
 import FormEditPointView from '../view/form-edit-point-view.js';
 import LoadingView from '../view/loading-view';
+import AddNewPointWithoutOffersView from '../view/add-new-point-without-offers-view';
+import AddNewPointWithoutDestinationView from '../view/add-new-point-without-destination-view';
+
 import { render, RenderPosition, replace } from '../framework/render.js';
 import TripModel from '../model/points-model.js';
+
 import points from '../mock/points.js';
 import destinations from '../mock/destination.js';
 import offersByType from '../mock/offer.js';
@@ -17,10 +21,12 @@ export default class TripPresenter {
   #tripControlsContainer;
   #tripEventsContainer;
   #tripModel;
+
   #listEmptyComponent = null;
   #newPointFormComponent = null;
-  #currentFilter = 'everything';
   #loadingComponent = null;
+
+  #currentFilter = 'everything';
   #isLoading = true;
 
   constructor({ tripControlsContainer, tripEventsContainer }) {
@@ -30,35 +36,40 @@ export default class TripPresenter {
   }
 
   init() {
-    this.renderFilters();
-    this.renderSorting();
-    this.renderEventsList();
-    this._initNewEventButton();
+    this.#renderFilters();
+    this.#renderSorting();
+    this.#renderEventsList();
+    this.#initNewEventButton();
+
     // симуляция загрузки
     setTimeout(() => {
       this.#isLoading = false;
-      this.renderEventsList();
+      this.#renderEventsList();
     }, 500);
   }
 
-  renderFilters() {
-    const filterComponent = new FilterView();
-    render(filterComponent, this.#tripControlsContainer, RenderPosition.BEFOREEND);
+  // вспомогательные методы
 
-    filterComponent.setFilterChangeHandler((selectedFilter) => {
-      this.#currentFilter = selectedFilter;
-      this.renderEventsList();
-    });
-  }
-
-  renderSorting() {
-    const sortingComponent = new SortingView();
-    render(sortingComponent, this.#tripEventsContainer, RenderPosition.BEFOREEND);
-  }
-
-  _initNewEventButton() {
+  #initNewEventButton() {
     const newEventButton = document.querySelector('.trip-main__event-add-btn');
     newEventButton.addEventListener('click', this.#handleNewEventClick);
+  }
+
+  #createNewPointForm(point) {
+    if (!point.description || !point.description.name) {
+      return new AddNewPointWithoutDestinationView({ point });
+    }
+
+    if (!point.offers || point.offers.length === 0) {
+      return new AddNewPointWithoutOffersView({ point });
+    }
+
+    return new FormEditPointView({
+      point,
+      destination: point.destination,
+      offers: point.offers,
+      allTypes
+    });
   }
 
   #handleNewEventClick = () => {
@@ -69,7 +80,7 @@ export default class TripPresenter {
     const newPoint = {
       id: 'new',
       type: allTypes[0],
-      destination: { name: '', description: '' },
+      destination: { name: '', description: '', pictures: [] },
       dateFrom: new Date(),
       dateTo: new Date(),
       basePrice: '',
@@ -77,12 +88,7 @@ export default class TripPresenter {
       isFavorite: false
     };
 
-    this.#newPointFormComponent = new FormEditPointView({
-      point: newPoint,
-      destination: newPoint.destination,
-      offers: [],
-      allTypes
-    });
+    this.#newPointFormComponent = this.#createNewPointForm(newPoint);
 
     const eventsListElement = this.#tripEventsContainer.querySelector('.trip-events__list');
     render(this.#newPointFormComponent, eventsListElement, RenderPosition.AFTERBEGIN);
@@ -115,7 +121,7 @@ export default class TripPresenter {
     }
   }
 
-  _removeComponent(component) {
+  #removeComponent(component) {
     if (!component) {
       return;
     }
@@ -130,19 +136,33 @@ export default class TripPresenter {
   }
 
 
-  _clearEventsContainer() {
+  #clearEventsContainer() {
     this.#tripEventsContainer.innerHTML = '';
 
-    this._removeComponent(this.#loadingComponent);
-    this._removeComponent(this.#listEmptyComponent);
+    this.#removeComponent(this.#loadingComponent);
+    this.#removeComponent(this.#listEmptyComponent);
 
     this.#loadingComponent = null;
     this.#listEmptyComponent = null;
   }
 
+  #renderFilters() {
+    const filterComponent = new FilterView();
+    render(filterComponent, this.#tripControlsContainer, RenderPosition.BEFOREEND);
 
-  renderEventsList() {
-    this._clearEventsContainer();
+    filterComponent.setFilterChangeHandler((selectedFilter) => {
+      this.#currentFilter = selectedFilter;
+      this.#renderEventsList();
+    });
+  }
+
+  #renderSorting() {
+    const sortingComponent = new SortingView();
+    render(sortingComponent, this.#tripEventsContainer, RenderPosition.BEFOREEND);
+  }
+
+  #renderEventsList() {
+    this.#clearEventsContainer();
 
     const eventsListComponent = new EventListView();
     render(eventsListComponent, this.#tripEventsContainer, RenderPosition.BEFOREEND);
@@ -154,14 +174,15 @@ export default class TripPresenter {
       return;
     }
 
-    if (!this.#tripModel.getPoints().length) {
-      this.#listEmptyComponent = new ListEmptyView(this.#currentFilter);
-      render(this.#listEmptyComponent, eventListContainer, RenderPosition.AFTERBEGIN);
-      return;
-    }
+    // if (!this.#tripModel.getPoints().length) {
+    //   this.#listEmptyComponent = new ListEmptyView(this.#currentFilter);
+    //   render(this.#listEmptyComponent, eventListContainer, RenderPosition.AFTERBEGIN);
+    //   return;
+    // }
 
-    const now = new Date();
     const allPoints = this.#tripModel.getPoints();
+    const now = new Date();
+
     const tripPoints = allPoints.filter((point) => {
       switch (this.#currentFilter) {
         case 'everything':
