@@ -32,4 +32,12 @@ export default class FilterView extends AbstractView {
   get template() {
     return createFilterTemplate();
   }
+
+  setFilterChangeHandler(callback) {
+    this.element.addEventListener('change', (evt) => {
+      if (evt.target.name === 'trip-filter') {
+        callback(evt.target.value);
+      }
+    });
+  }
 }

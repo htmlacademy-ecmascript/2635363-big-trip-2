@@ -4,20 +4,30 @@ import offersByType from './offer.js';
 
 let pointId = 1;
 
+const getRandomSubset = (array, count) => {
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+};
+
 export const generateRandomPoint = () => {
   const offerType = getRandomArrayElement(offersByType);
+  const destination = getRandomArrayElement(destinations);
 
-  const from = new Date();
-  const to = new Date(from.getTime() + getRandomInteger(1, 5) * 60 * 60 * 1000);
+  const dateFrom = new Date();
+  const dateTo = new Date(dateFrom.getTime() + getRandomInteger(1, 5) * 60 * 60 * 1000);
+
+  const offersCount = getRandomInteger(0, offerType.offers.length);
+  const offers = getRandomSubset(offerType.offers, offersCount);
 
   return {
     id: String(pointId++),
     type: offerType.type,
-    destination: getRandomArrayElement(destinations).id,
-    dateFrom: from,
-    dateTo: to,
+    destination,
+    dateFrom,
+    dateTo,
     basePrice: getRandomInteger(20, 500),
-    offers: offerType.offers.map((offer) => offer.id),
+    offers,
+    isFavorite: false
   };
 };
 
