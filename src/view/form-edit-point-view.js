@@ -1,6 +1,7 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import { formatDateTime } from '../utils/date';
 
-function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
+function createFormEditPointTemplate({ point, destination, offers, allTypes, isNew }) {
   const typeItems = allTypes.map((type) => `
     <div class="event__type-item">
       <input
@@ -17,7 +18,6 @@ function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
     </div>
   `).join('');
 
-  // Генерация офферов для данного события
   const offersList = offers.map((offer) => `
     <div class="event__offer-selector">
       <input
@@ -39,6 +39,8 @@ function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
 <li class="trip-events__item">
   <form class="event event--edit" action="#" method="post">
     <header class="event__header">
+    <h2 class="visually-hidden">${isNew ? 'New event' : 'Edit event'}</h2>
+
       <div class="event__type-wrapper">
         <label class="event__type  event__type-btn">
           <span class="visually-hidden">Choose event type</span>
@@ -80,10 +82,15 @@ function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
       </div>
 
       <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">Delete</button>
-      <button class="event__rollup-btn" type="button">
-        <span class="visually-hidden">Open event</span>
+      <button class="event__reset-btn btn btn--grey" type="reset">
+        ${isNew ? 'Cancel' : 'Delete'}
       </button>
+
+      <!-- Стрелка Collapse показывается только для редактирования -->
+      ${!isNew ? `
+        <button class="event__rollup-btn" type="button">
+          <span class="visually-hidden">Open event</span>
+        </button>` : ''}
     </header>
 
     <section class="event__details">
@@ -104,28 +111,20 @@ function createFormEditPointTemplate({ point, destination, offers, allTypes }) {
   `;
 }
 
-function formatDateTime(date) {
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
-}
-
 export default class FormEditPointView extends AbstractView {
   #point;
   #destination;
   #offers;
   #allTypes;
+  #isNew;
 
-  constructor({ point, destination, offers, allTypes }) {
+  constructor({ point, destination, offers, allTypes, isNew = false }) {
     super();
     this.#point = point;
     this.#destination = destination;
     this.#offers = offers;
     this.#allTypes = allTypes;
+    this.#isNew = isNew;
   }
 
   get template() {
@@ -133,7 +132,8 @@ export default class FormEditPointView extends AbstractView {
       point: this.#point,
       destination: this.#destination,
       offers: this.#offers,
-      allTypes: this.#allTypes
+      allTypes: this.#allTypes,
+      isNew: this.#isNew
     });
   }
 
@@ -142,6 +142,16 @@ export default class FormEditPointView extends AbstractView {
   }
 
   setCollapseClickHandler(callback) {
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', callback);
+    const rollupBtn = this.element.querySelector('.event__rollup-btn');
+    if (rollupBtn) {
+      rollupBtn.addEventListener('click', callback);
+    }
+  }
+
+  setCancelClickHandler(callback) {
+    const cancelBtn = this.element.querySelector('.event__reset-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', callback);
+    }
   }
 }

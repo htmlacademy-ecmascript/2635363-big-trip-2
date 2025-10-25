@@ -1,6 +1,6 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import offersByType from '../mock/offer';
-import { formatDate } from '../utils/date.js';
+import { formatDateTime } from '../utils/date.js';
 
 export default class AddNewPointWithoutOffersView extends AbstractStatefulView {
   constructor({ point }) {
@@ -47,10 +47,10 @@ export default class AddNewPointWithoutOffersView extends AbstractStatefulView {
 
             <div class="event__field-group  event__field-group--time">
               <label class="visually-hidden" for="event-start-time-1">From</label>
-              <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${formatDate(point.dateFrom)}">
+              <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${formatDateTime(point.dateFrom)}">
               &mdash;
               <label class="visually-hidden" for="event-end-time-1">To</label>
-              <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${formatDate(point.dateTo)}">
+              <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${formatDateTime(point.dateTo)}">
             </div>
 
             <div class="event__field-group  event__field-group--price">

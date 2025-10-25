@@ -5,17 +5,11 @@ import EventItemView from '../view/event-item-view.js';
 import ListEmptyView from '../view/list-empty-view.js';
 import FormEditPointView from '../view/form-edit-point-view.js';
 import LoadingView from '../view/loading-view';
+import formView from '../view/form-edit-point-view';
 import AddNewPointWithoutOffersView from '../view/add-new-point-without-offers-view';
 import AddNewPointWithoutDestinationView from '../view/add-new-point-without-destination-view';
-
 import { render, RenderPosition, replace } from '../framework/render.js';
 import TripModel from '../model/points-model.js';
-
-import points from '../mock/points.js';
-import destinations from '../mock/destination.js';
-import offersByType from '../mock/offer.js';
-
-const allTypes = offersByType.map((offer) => offer.type);
 
 export default class TripPresenter {
   #tripControlsContainer;
@@ -25,6 +19,7 @@ export default class TripPresenter {
   #listEmptyComponent = null;
   #newPointFormComponent = null;
   #loadingComponent = null;
+  #filterComponent = null;
 
   #currentFilter = 'everything';
   #isLoading = true;
@@ -32,7 +27,9 @@ export default class TripPresenter {
   constructor({ tripControlsContainer, tripEventsContainer }) {
     this.#tripControlsContainer = tripControlsContainer;
     this.#tripEventsContainer = tripEventsContainer;
-    this.#tripModel = new TripModel({ points, destinations, offersByType });
+    this.#tripModel = new TripModel();
+
+    this.allTypes = this.#tripModel.getOffersByType().map((offer) => offer.type);
   }
 
   init() {
@@ -48,28 +45,59 @@ export default class TripPresenter {
     }, 500);
   }
 
-  // вспомогательные методы
-
   #initNewEventButton() {
-    const newEventButton = document.querySelector('.trip-main__event-add-btn');
-    newEventButton.addEventListener('click', this.#handleNewEventClick);
+    this._newEventButton = document.querySelector('.trip-main__event-add-btn');
+    this._newEventButton.addEventListener('click', this.#handleNewEventClick);
   }
 
   #createNewPointForm(point) {
-    if (!point.description || !point.description.name) {
-      return new AddNewPointWithoutDestinationView({ point });
-    }
+    const destinations = this.#tripModel.getDestinations();
+    const offersForType = this.#tripModel.getOffersForType(point.type);
 
-    if (!point.offers || point.offers.length === 0) {
-      return new AddNewPointWithoutOffersView({ point });
+    if (!point.destination || !point.destination.name) {
+      return new AddNewPointWithoutDestinationView({
+        point,
+        destinations,
+        offersForType
+      });
     }
-
-    return new FormEditPointView({
+    if (!offersForType.length) {
+      return new AddNewPointWithoutOffersView({
+        point,
+        destinations,
+        offersForType
+      });
+    }
+    return new formView({
       point,
       destination: point.destination,
-      offers: point.offers,
-      allTypes
+      offers: offersForType,
+      allTypes: this.allTypes
     });
+  }
+
+  #closeNewPointForm() {
+    if (!this.#newPointFormComponent) {
+      return;
+    }
+
+    this.#newPointFormComponent.element.remove();
+    this.#newPointFormComponent = null;
+    if (this._newEventButton) {
+      this._newEventButton.disabled = false;
+    }
+  }
+
+  #addEscHandler(closeCallback) {
+    const onEsc = (evt) => {
+      if (evt.key === 'Escape' || evt.key === 'Esc') {
+        evt.preventDefault();
+        closeCallback();
+        document.removeEventListener('keydown', onEsc);
+      }
+    };
+    document.addEventListener('keydown', onEsc);
+    return onEsc;
   }
 
   #handleNewEventClick = () => {
@@ -77,13 +105,15 @@ export default class TripPresenter {
       return;
     }
 
+    this._newEventButton.disabled = true;
+
     const newPoint = {
       id: 'new',
-      type: allTypes[0],
+      type: this.allTypes[0],
       destination: { name: '', description: '', pictures: [] },
       dateFrom: new Date(),
       dateTo: new Date(),
-      basePrice: '',
+      basePrice: 0,
       offers: [],
       isFavorite: false
     };
@@ -93,33 +123,34 @@ export default class TripPresenter {
     const eventsListElement = this.#tripEventsContainer.querySelector('.trip-events__list');
     render(this.#newPointFormComponent, eventsListElement, RenderPosition.AFTERBEGIN);
 
-    const onEscKeyDown = (evt) => {
-      if (evt.key === 'Escape' || evt.key === 'Esc') {
-        this.#removeNewPointForm();
-        document.removeEventListener('keydown', onEscKeyDown);
-      }
-    };
-
-    this.#newPointFormComponent.setFormSubmitHandler((evt) => {
-      evt.preventDefault();
-      this.#removeNewPointForm();
-      document.removeEventListener('keydown', onEscKeyDown);
-    });
-
-    this.#newPointFormComponent.setCollapseClickHandler(() => {
-      this.#removeNewPointForm();
-      document.removeEventListener('keydown', onEscKeyDown);
-    });
+    const closeForm = () => this.#closeNewPointForm();
+    const onEscKeyDown = this.#addEscHandler(closeForm);
 
     document.addEventListener('keydown', onEscKeyDown);
-  };
 
-  #removeNewPointForm() {
-    if (this.#newPointFormComponent) {
-      this.#newPointFormComponent.element.remove();
-      this.#newPointFormComponent = null;
+    if (typeof this.#newPointFormComponent.setFormSubmitHandler === 'function') {
+      this.#newPointFormComponent.setFormSubmitHandler((evt) => {
+        evt.preventDefault();
+        this.#closeNewPointForm();
+        document.removeEventListener('keydown', onEscKeyDown);
+      });
     }
-  }
+
+    if (typeof this.#newPointFormComponent.setCancelClickHandler === 'function') {
+      this.#newPointFormComponent.setCancelClickHandler((evt) => {
+        evt.preventDefault();
+        this.#closeNewPointForm();
+        document.removeEventListener('keydown', onEscKeyDown);
+      });
+    }
+
+    if (typeof this.#newPointFormComponent.setCollapseClickHandler === 'function') {
+      this.#newPointFormComponent.setCollapseClickHandler(() => {
+        this.#closeNewPointForm();
+        document.removeEventListener('keydown', onEscKeyDown);
+      });
+    }
+  };
 
   #removeComponent(component) {
     if (!component) {
@@ -135,23 +166,32 @@ export default class TripPresenter {
     }
   }
 
+  #closeEditPointForm(eventItemComponent, formEditPointComponent) {
+    if (!formEditPointComponent.element.parentElement) {
+      return;
+    }
+    replace(eventItemComponent, formEditPointComponent);
+  }
 
   #clearEventsContainer() {
     this.#tripEventsContainer.innerHTML = '';
-
     this.#removeComponent(this.#loadingComponent);
     this.#removeComponent(this.#listEmptyComponent);
-
     this.#loadingComponent = null;
     this.#listEmptyComponent = null;
   }
 
   #renderFilters() {
-    const filterComponent = new FilterView();
-    render(filterComponent, this.#tripControlsContainer, RenderPosition.BEFOREEND);
+    if (this.#filterComponent) {
+      this.#removeComponent(this.#filterComponent);
+    }
 
-    filterComponent.setFilterChangeHandler((selectedFilter) => {
+    this.#filterComponent = new FilterView({ currentFilter: this.#currentFilter });
+    render(this.#filterComponent, this.#tripControlsContainer, RenderPosition.BEFOREEND);
+
+    this.#filterComponent.setFilterChangeHandler((selectedFilter) => {
       this.#currentFilter = selectedFilter;
+      this.#removeNewPointForm();
       this.#renderEventsList();
     });
   }
@@ -174,27 +214,16 @@ export default class TripPresenter {
       return;
     }
 
-    // if (!this.#tripModel.getPoints().length) {
-    //   this.#listEmptyComponent = new ListEmptyView(this.#currentFilter);
-    //   render(this.#listEmptyComponent, eventListContainer, RenderPosition.AFTERBEGIN);
-    //   return;
-    // }
-
     const allPoints = this.#tripModel.getPoints();
     const now = new Date();
 
     const tripPoints = allPoints.filter((point) => {
       switch (this.#currentFilter) {
-        case 'everything':
-          return true;
-        case 'future':
-          return new Date(point.dateFrom) > now;
-        case 'present':
-          return new Date(point.dateFrom) <= now && new Date(point.dateTo) >= now;
-        case 'past':
-          return new Date(point.dateTo) < now;
-        default:
-          return true;
+        case 'everything': return true;
+        case 'future': return new Date(point.dateFrom) > now;
+        case 'present': return new Date(point.dateFrom) <= now && new Date(point.dateTo) >= now;
+        case 'past': return new Date(point.dateTo) < now;
+        default: return true;
       }
     });
 
@@ -205,20 +234,13 @@ export default class TripPresenter {
     }
 
     tripPoints.forEach((point) => {
-      const destination = point.destination;
-      const offers = point.offers;
-
-      const eventItemComponent = new EventItemView({ point, destination, offers });
-      const formEditPointComponent = new FormEditPointView({ point, destination, offers, allTypes });
+      const eventItemComponent = new EventItemView({ point, destination: point.destination, offers: point.offers });
+      const formEditPointComponent = new FormEditPointView({ point, destination: point.destination, offers: point.offers, allTypes: this.allTypes });
 
       render(eventItemComponent, eventListContainer, RenderPosition.BEFOREEND);
 
-      const onEscKeyDown = (evt) => {
-        if (evt.key === 'Escape' || evt.key === 'Esc') {
-          replace(formEditPointComponent, eventItemComponent);
-          document.removeEventListener('keydown', onEscKeyDown);
-        }
-      };
+      const closeEditForm = () => this.#closeEditPointForm(eventItemComponent, formEditPointComponent);
+      const onEscKeyDown = this.#addEscHandler(closeEditForm);
 
       eventItemComponent.setExpandClickHandler(() => {
         replace(formEditPointComponent, eventItemComponent);
@@ -227,14 +249,25 @@ export default class TripPresenter {
 
       formEditPointComponent.setFormSubmitHandler((evt) => {
         evt.preventDefault();
-        replace(eventItemComponent, formEditPointComponent);
+        closeEditForm();
         document.removeEventListener('keydown', onEscKeyDown);
       });
 
       formEditPointComponent.setCollapseClickHandler(() => {
-        replace(eventItemComponent, formEditPointComponent);
+        closeEditForm();
         document.removeEventListener('keydown', onEscKeyDown);
       });
     });
+  }
+
+  #removeNewPointForm() {
+    if (!this.#newPointFormComponent) {
+      return;
+    }
+    this.#newPointFormComponent.element.remove();
+    this.#newPointFormComponent = null;
+    if (this._newEventButton) {
+      this._newEventButton.disabled = false;
+    }
   }
 }
