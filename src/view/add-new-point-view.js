@@ -2,7 +2,7 @@ import flatpickr from 'flatpickr';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 
-const createFormEditTemplate = (point, destinations, offers) => {
+const createFormNewPointTemplate = (point, destinations, offers) => {
   const { basePrice, dateFrom, dateTo, type, destination, offers: selectedOffers } = point;
 
   const destinationData = destination || null;
@@ -31,13 +31,21 @@ const createFormEditTemplate = (point, destinations, offers) => {
       `;
     }
 
+    const photosTemplate = dest.pictures?.map((photo) => `
+    <img class="event__photo" src="${photo.src}" alt="${photo.description}">
+  `).join('') || '';
+
     return `
       <section class="event__section  event__section--destination">
-        <h3 class="event__section-title">Destination</h3>
+        <h3 class="event__section-title  event__section-title--destination">Destination</h3>
         <p class="event__destination-description">${dest.description}</p>
+        <div  class="event__photos-container">
+          <div class="event__photos-tape">${photosTemplate}</div>
+        </div>
       </section>
     `;
   };
+
 
   const destinationSection = createDestinationSection(destinationData);
 
@@ -137,10 +145,7 @@ const createFormEditTemplate = (point, destinations, offers) => {
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Delete</button>
-        <button class="event__rollup-btn" type="button">
-          <span class="visually-hidden">Open event</span>
-        </button>
+        <button class="event__reset-btn" type="reset">Cancel</button>
       </header>
 
       <section class="event__details">
@@ -156,7 +161,7 @@ const createFormEditTemplate = (point, destinations, offers) => {
   `;
 };
 
-export default class FormEditPointView extends AbstractStatefulView {
+export default class FormNewPointView extends AbstractStatefulView {
   #destinations = null;
   #offers = null;
   #datePickerFrom = null;
@@ -165,10 +170,11 @@ export default class FormEditPointView extends AbstractStatefulView {
   constructor({ point, destinations, offers }) {
     super();
     this._callback = {};
-    this._setState(FormEditPointView.parsePointToState(point));
+    this._setState(FormNewPointView.parsePointToState(point));
     this.#destinations = destinations;
     this.#offers = offers;
     this._restoreHandlers();
+    this.#setDestinationChangeHandler();
   }
 
   static parsePointToState(point) {
@@ -180,18 +186,15 @@ export default class FormEditPointView extends AbstractStatefulView {
   }
 
   get template() {
-    return createFormEditTemplate(this._state, this.#destinations, this.#offers);
+    return createFormNewPointTemplate(this._state, this.#destinations, this.#offers);
   }
 
   _restoreHandlers() {
-    this.element.querySelector('.event__rollup-btn')
-      ?.addEventListener('click', this.#handleCloseClick);
-
     this.element.querySelector('form')
       ?.addEventListener('submit', this.#handleFormSubmit);
 
     this.element.querySelector('.event__reset-btn')
-      ?.addEventListener('click', this.#handleDeleteClick);
+      ?.addEventListener('click', this.#handleCancelClick);
 
     this.#setDatePickers();
   }
@@ -244,29 +247,49 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   #handleFormSubmit = (evt) => {
     evt.preventDefault();
-    this._callback.submit?.(FormEditPointView.parseStateToPoint(this._state));
+    this._callback.submit?.(FormNewPointView.parseStateToPoint(this._state));
+  };
+
+  #setDestinationChangeHandler() {
+    this.element.querySelector('.event__input--destination')
+      ?.addEventListener('change', this.#handleDestinationChange);
+  }
+
+  #handleDestinationChange = (evt) => {
+    const selectedName = evt.target.value;
+    const selectedDestination = this.#destinations.find((d) => d.name === selectedName);
+
+    if (!selectedDestination) {
+      this.updateElement({
+        destination: '',
+        destinationDescription: '',
+        pictures: []
+      });
+      return;
+    }
+
+    this.updateElement({
+      destination: selectedDestination.id,
+      destinationDescription: selectedDestination.description,
+      pictures: selectedDestination.pictures
+    });
   };
 
   setFormSubmitHandler(callback) {
     this._callback.submit = callback;
   }
 
-  #handleCloseClick = (evt) => {
-    evt.preventDefault();
-    this._callback.close?.();
-  };
-
   setCloseClickHandler(callback) {
     this._callback.close = callback;
   }
 
-  #handleDeleteClick = (evt) => {
+  #handleCancelClick = (evt) => {
     evt.preventDefault();
-    this._callback.delete?.();
+    this._callback.cancel?.();
   };
 
-  setDeleteClickHandler(callback) {
-    this._callback.delete = callback;
+  setCancelClickHandler(callback) {
+    this._callback.cancel = callback;
   }
 
   destroy() {
