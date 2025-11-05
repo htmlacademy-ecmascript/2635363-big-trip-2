@@ -4,6 +4,8 @@ export default class EventItemView extends AbstractView {
   #point;
   #destination;
   #offers;
+  #handleExpandClick;
+  #handleFavoriteClick;
 
   constructor({ point, destination, offers }) {
     super();
@@ -46,6 +48,8 @@ export default class EventItemView extends AbstractView {
                 <span class="event__offer-price">${o.price}</span>
               </li>`).join('')}
           </ul>` : ''}
+
+           <!-- Кнопка избранного -->
           <button class="event__favorite-btn ${point.isFavorite ? 'event__favorite-btn--active' : ''}" type="button">
             <span class="visually-hidden">Add to favorite</span>
             <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
@@ -83,5 +87,10 @@ export default class EventItemView extends AbstractView {
 
   setExpandClickHandler(callback) {
     this.element.querySelector('.event__rollup-btn').addEventListener('click', callback);
+  }
+
+  setFavoriteClickHandler(callback) {
+    this.element.querySelector('.event__favorite-btn')
+      .addEventListener('click', callback);
   }
 }

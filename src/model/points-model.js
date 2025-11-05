@@ -38,7 +38,7 @@ export default class TripModel {
     return offersForType.find((offer) => offer.id === offerId);
   }
 
-  updatePoints(update) {
+  updatePoint(update) {
     this.#points = this.#points.map((point) =>
       point.id === update.id ? update : point
     );
