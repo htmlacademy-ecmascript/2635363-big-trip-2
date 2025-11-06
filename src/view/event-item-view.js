@@ -1,11 +1,11 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import dayjs from 'dayjs';
+import { getDuration } from '../utils/duration.js';
 
 export default class EventItemView extends AbstractView {
   #point;
   #destination;
   #offers;
-  #handleExpandClick;
-  #handleFavoriteClick;
 
   constructor({ point, destination, offers }) {
     super();
@@ -22,18 +22,18 @@ export default class EventItemView extends AbstractView {
     return `
     <li class="trip-events__item">
       <div class="event">
-        <time class="event__date" datetime="${point.dateFrom}">${this._formatDate(point.dateFrom)}</time>
+        <time class="event__date" datetime="${point.dateFrom}">${dayjs(point.dateFrom).format('MMM DD').toUpperCase()}</time>
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${point.type}.png" alt="Event type icon">
         </div>
         <h3 class="event__title">${point.type.charAt(0).toUpperCase() + point.type.slice(1)} ${destination.name}</h3>
         <div class="event__schedule">
           <p class="event__time">
-            <time class="event__start-time" datetime="${point.dateFrom}">${this._formatTime(point.dateFrom)}</time>
+            <time class="event__start-time" datetime="${point.dateFrom}">${dayjs(point.dateFrom).format('HH:mm')}</time>
             &mdash;
-            <time class="event__end-time" datetime="${point.dateTo}">${this._formatTime(point.dateTo)}</time>
+            <time class="event__end-time" datetime="${point.dateTo}">${dayjs(point.dateTo).format('HH:mm')}</time>
           </p>
-          <p class="event__duration">${this._getDuration(point.dateFrom, point.dateTo)}</p>
+          <p class="event__duration">${getDuration(point.dateFrom, point.dateTo)}</p>
         </div>
         <p class="event__price">
           &euro;&nbsp;<span class="event__price-value">${point.basePrice}</span>
@@ -62,27 +62,6 @@ export default class EventItemView extends AbstractView {
       </div>
     </li>
     `;
-  }
-
-  _formatDate(date) {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toUpperCase();
-  }
-
-  _formatTime(date) {
-    const d = new Date(date);
-    return d.toTimeString().slice(0, 5);
-  }
-
-  _getDuration(start, end) {
-    const ms = new Date(end) - new Date(start);
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return `${hours}H ${minutes}M`;
-    }
-    return `${minutes}M`;
   }
 
   setExpandClickHandler(callback) {
