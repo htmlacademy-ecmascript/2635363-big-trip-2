@@ -7,6 +7,7 @@ import LoadingView from '../view/loading-view.js';
 import { remove, render, RenderPosition } from '../framework/render.js';
 import TripModel from '../model/points-model.js';
 import PointPresenter from './point-presenter.js';
+import { filterPoints, sortPoints } from '../utils/points.js';
 
 export default class TripPresenter {
   #tripControlsContainer;
@@ -17,9 +18,11 @@ export default class TripPresenter {
   #listEmptyComponent = null;
   #loadingComponent = null;
   #filterComponent = null;
+  #sortingComponent = null;
   #currentFilter = 'everything';
   #isLoading = true;
   #newEventButton = null;
+  #currentSortType = 'day';
 
   constructor({ tripControlsContainer, tripEventsContainer }) {
     this.#tripControlsContainer = tripControlsContainer;
@@ -54,16 +57,14 @@ export default class TripPresenter {
       return;
     }
 
-    const points = this.#getFilteredPoints();
-    if (points.length === 0) {
+    const filteredPoints = filterPoints(this.#tripModel.getPoints(), this.#currentFilter);
+    if (filteredPoints.length === 0) {
       this.#listEmptyComponent = new ListEmptyView(this.#currentFilter);
       render(this.#listEmptyComponent, listContainer, RenderPosition.AFTERBEGIN);
       return;
     }
-
-    points.forEach((point) => {
-      this.#renderPoint(listContainer, point);
-    });
+    const sortedPoints = sortPoints(filteredPoints, this.#currentSortType);
+    sortedPoints.forEach((point) => this.#renderPoint(listContainer, point));
   }
 
   #renderPoint(container, point) {
@@ -92,9 +93,24 @@ export default class TripPresenter {
   }
 
   #renderSorting() {
-    const sortingComponent = new SortingView();
-    render(sortingComponent, this.#tripEventsContainer, RenderPosition.BEFOREEND);
+
+    if (this.#sortingComponent) {
+      remove(this.#sortingComponent);
+    }
+    this.#sortingComponent = new SortingView(this.#currentSortType);
+    render(this.#sortingComponent, this.#tripEventsContainer, RenderPosition.BEFOREEND);
+
+    this.#sortingComponent.setSortChangeHandler(this.#handleSortChange);
   }
+
+  #handleSortChange = (sortType) => {
+    if (sortType === this.#currentSortType) {
+      return;
+    }
+    this.#currentSortType = sortType;
+    this.#clearPointPresenters();
+    this.#renderEventsList();
+  };
 
   #clearEventsContainer() {
     this.#clearPointPresenters();
@@ -107,19 +123,6 @@ export default class TripPresenter {
   #clearPointPresenters() {
     this.#pointPresenters.forEach((presenter) => presenter.destroy());
     this.#pointPresenters.clear();
-  }
-
-  #getFilteredPoints() {
-    const now = new Date();
-    return this.#tripModel.getPoints().filter((point) => {
-      switch (this.#currentFilter) {
-        case 'everything': return true;
-        case 'future': return new Date(point.dateFrom) > now;
-        case 'present': return new Date(point.dateFrom) <= now && new Date(point.dateTo) >= now;
-        case 'past': return new Date(point.dateTo) < now;
-        default: return true;
-      }
-    });
   }
 
   #handlePointChange = (updatedPoint) => {
