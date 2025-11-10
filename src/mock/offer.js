@@ -30,6 +30,13 @@ const offersByType = [
     ]
   },
   {
+    type: 'train',
+    offers: [
+      { id: 19, title: 'Choose seats', price: 25 },
+      { id: 20, title: 'Add meal', price: 15 }
+    ]
+  },
+  {
     type: 'ship',
     offers: [
       {
