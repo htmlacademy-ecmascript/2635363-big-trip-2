@@ -159,7 +159,7 @@ export default class TripPresenter {
     const formComponent = new FormNewPointView({
       point: newPoint,
       destinations: this.#tripModel.getDestinations(),
-      offers: this.#tripModel.getOffersForType(newPoint.type)
+      offers: this.#tripModel.getOffersByType()
     });
 
     render(formComponent, this.#tripEventsContainer.querySelector('.trip-events__list'), RenderPosition.AFTERBEGIN);

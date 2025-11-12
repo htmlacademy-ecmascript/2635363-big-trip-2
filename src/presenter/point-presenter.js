@@ -37,7 +37,7 @@ export default class PointPresenter {
     this.#pointEditComponent = new FormEditPointView({
       point,
       destinations: this.#tripModel.getDestinations(),
-      offers: this.#tripModel.getOffersForType(this.#point.type)
+      offers: this.#tripModel.getOffersByType()
     });
 
     this.#pointComponent.setExpandClickHandler(this.#handleEditClick);

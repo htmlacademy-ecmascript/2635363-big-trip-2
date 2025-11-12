@@ -5,8 +5,8 @@ const destinations = [
     name: 'Amsterdam',
     description: 'Amsterdam is the capital of the Netherlands, known for its canals, museums, cycling culture, and vibrant nightlife.',
     pictures: [
-      { src: '', description: 'Вид на канал' },
-      { src: 'img/photos/1.jpg', description: 'Трамвай в центре' }
+      { src: 'img/photos/1.jpg', description: 'Вид на канал' },
+      { src: 'img/photos/3.jpg', description: 'Трамвай в центре' }
     ]
   },
   {
