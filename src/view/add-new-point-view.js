@@ -16,9 +16,14 @@ const createFormNewPointTemplate = (point, destinations) => {
   const destinationData = destination || null;
   const destinationName = destinationData ? destinationData.name : '';
 
-  const offersTemplate = availableOffers.map((offer) => {
-    const checked = selectedOffers.includes(offer.id) ? 'checked' : '';
-    return `
+  const createOffersSection = (offers) => {
+    if (!offers || offers.length === 0) {
+      return '';
+    }
+
+    const offersTemplate = availableOffers.map((offer) => {
+      const checked = selectedOffers.includes(offer.id) ? 'checked' : '';
+      return `
       <div class="event__offer-selector">
         <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${checked}>
         <label class="event__offer-label" for="event-offer-${offer.id}">
@@ -26,7 +31,15 @@ const createFormNewPointTemplate = (point, destinations) => {
           +€&nbsp;<span class="event__offer-price">${offer.price}</span>
         </label>
       </div>`;
-  }).join('');
+    }).join('');
+
+    return `
+    <section class="event__section  event__section--offers">
+      <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+      <div class="event__available-offers">${offersTemplate}</div>
+    </section>
+  `;
+  };
 
   const createDestinationSection = (dest) => {
     if (!dest || !dest.description) {
@@ -52,7 +65,9 @@ const createFormNewPointTemplate = (point, destinations) => {
   };
 
 
+  const offersSection = createOffersSection(availableOffers);
   const destinationSection = createDestinationSection(destinationData);
+
 
   return `
   <li class="trip-events__item">
@@ -112,11 +127,8 @@ const createFormNewPointTemplate = (point, destinations) => {
       </header>
 
       <section class="event__details">
-        <section class="event__section  event__section--offers">
-          <h3 class="event__section-title">Offers</h3>
-          <div class="event__available-offers">${offersTemplate}</div>
-        </section>
 
+        ${offersSection}
         ${destinationSection}
       </section>
     </form>

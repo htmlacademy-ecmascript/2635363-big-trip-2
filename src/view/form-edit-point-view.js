@@ -21,9 +21,14 @@ const createFormEditTemplate = (point, destinations) => {
   const destinationData = destination || null;
   const destinationName = destinationData ? destinationData.name : '';
 
-  const offersTemplate = availableOffers.map((offer) => {
-    const checked = selectedOffers.includes(offer.id) ? 'checked' : '';
-    return `
+  const createOffersSection = (offers) => {
+    if (!offers || offers.length === 0) {
+      return '';
+    }
+
+    const offersTemplate = availableOffers.map((offer) => {
+      const checked = selectedOffers.includes(offer.id) ? 'checked' : '';
+      return `
       <div class="event__offer-selector">
         <input class="event__offer-checkbox visually-hidden"
                id="event-offer-${offer.id}"
@@ -34,7 +39,17 @@ const createFormEditTemplate = (point, destinations) => {
           +€&nbsp;<span class="event__offer-price">${offer.price}</span>
         </label>
       </div>`;
-  }).join('');
+    }).join('');
+
+    return `
+    <section class="event__section  event__section--offers">
+      <h3 class="event__section-title event__section-title--offers">Offers</h3>
+      <div class="event__available-offers">
+      ${offersTemplate}
+      </div>
+    </section>
+    `;
+  };
 
   const createDestinationSection = (dest) => {
     if (!dest || !dest.description) {
@@ -59,6 +74,7 @@ const createFormEditTemplate = (point, destinations) => {
     `;
   };
 
+  const offersSection = createOffersSection(availableOffers);
   const destinationSection = createDestinationSection(destinationData);
 
   return `
@@ -117,13 +133,7 @@ const createFormEditTemplate = (point, destinations) => {
       </header>
 
       <section class="event__details">
-        <section class="event__section  event__section--offers">
-          <h3 class="event__section-title">Offers</h3>
-          <div class="event__available-offers">
-          ${offersTemplate}
-          </div>
-        </section>
-
+        ${offersSection}
         ${destinationSection}
       </section>
     </form>
@@ -150,8 +160,6 @@ export default class FormEditPointView extends AbstractStatefulView {
       availableOffers,
       selectedOffers: point.offers ?? []
     }));
-
-    console.log('FormEditPointView состояние: ', this._state);
 
     this._restoreHandlers();
   }
@@ -240,9 +248,6 @@ export default class FormEditPointView extends AbstractStatefulView {
     // ищем офферы по новому типу
     const availableOffers = this.#offers.find((o) => o.type === newType)?.offers ?? [];
 
-    console.log('тип изменился:', newType);
-    console.log('доступные офферы: ', availableOffers);
-
     this.updateElement({
       type: newType,
       availableOffers,
@@ -273,10 +278,6 @@ export default class FormEditPointView extends AbstractStatefulView {
     } else {
       current.delete(offerId);
     }
-
-    const updatedOffers = Array.from(current);
-    console.log('оффер изменился:', offerId, 'checked:', checkbox.checked);
-    console.log('текущие офферы:', updatedOffers);
 
     this.updateElement({
       selectedOffers: Array.from(current)
