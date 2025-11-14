@@ -1,4 +1,3 @@
-
 import 'flatpickr/dist/flatpickr.min.css';
 
 export const createOffersSection = (availableOffers = [], selectedOffers = []) => {
@@ -28,9 +27,6 @@ export const createOffersSection = (availableOffers = [], selectedOffers = []) =
     </section>`;
 };
 
-/**
- * Создает HTML-секцию с информацией о направлении
- */
 export const createDestinationSection = (destination) => {
   if (!destination || !destination.description) {
     return `

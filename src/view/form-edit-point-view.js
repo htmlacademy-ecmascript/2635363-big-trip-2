@@ -127,6 +127,9 @@ export default class FormEditPointView extends AbstractStatefulView {
     const point = { ...state };
     point.offers = point.selectedOffers ?? [];
     delete point.availableOffers;
+    delete point.selectedOffers;
+    delete point.dateFrom;
+    delete point.dateTo;
     return point;
   }
 
@@ -219,7 +222,7 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   #handleOfferToggle = (evt) => {
     const checkbox = evt.target;
-    const offerId = Number(checkbox.id.replace('event-offer-', '')); // id из input-id
+    const offerId = Number(checkbox.id.replace('event-offer-', ''));
     const current = new Set(this._state.selectedOffers);
 
     if (checkbox.checked) {
