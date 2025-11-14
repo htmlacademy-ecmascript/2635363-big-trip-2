@@ -1,6 +1,8 @@
 import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
+import { createOffersSection, createDestinationSection } from '../utils/form-utils.js';
 
 const createFormNewPointTemplate = (point, destinations) => {
   const {
@@ -16,56 +18,7 @@ const createFormNewPointTemplate = (point, destinations) => {
   const destinationData = destination || null;
   const destinationName = destinationData ? destinationData.name : '';
 
-  const createOffersSection = (offers) => {
-    if (!offers || offers.length === 0) {
-      return '';
-    }
-
-    const offersTemplate = availableOffers.map((offer) => {
-      const checked = selectedOffers.includes(offer.id) ? 'checked' : '';
-      return `
-      <div class="event__offer-selector">
-        <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${checked}>
-        <label class="event__offer-label" for="event-offer-${offer.id}">
-          <span class="event__offer-title">${offer.title}</span>
-          +€&nbsp;<span class="event__offer-price">${offer.price}</span>
-        </label>
-      </div>`;
-    }).join('');
-
-    return `
-    <section class="event__section  event__section--offers">
-      <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-      <div class="event__available-offers">${offersTemplate}</div>
-    </section>
-  `;
-  };
-
-  const createDestinationSection = (dest) => {
-    if (!dest || !dest.description) {
-      return `
-        <section class="event__section  event__section--destination">
-          <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-          <p class="event__destination-description">нет данных</p>
-        </section>
-      `;
-    }
-
-    const pictures = (dest.pictures || []).map((p) => `<img class="event__photo" src="${p.src}" alt="${p.description}">`).join('');
-
-    return `
-      <section class="event__section  event__section--destination">
-        <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-        <p class="event__destination-description">${dest.description}</p>
-        <div  class="event__photos-container">
-          <div class="event__photos-tape">${pictures}</div>
-        </div>
-      </section>
-    `;
-  };
-
-
-  const offersSection = createOffersSection(availableOffers);
+  const offersSection = createOffersSection(availableOffers, selectedOffers);
   const destinationSection = createDestinationSection(destinationData);
 
 
@@ -261,7 +214,7 @@ export default class FormNewPointView extends AbstractStatefulView {
 
   #handleOfferToggle = (evt) => {
     const checkbox = evt.target;
-    const offerId = Number(checkbox.id.replace('event-offer-', ''));
+    const offerId = Number(evt.target.dataset.offerId);
     const current = new Set(this._state.selectedOffers);
 
     if (checkbox.checked) {
@@ -312,13 +265,14 @@ export default class FormNewPointView extends AbstractStatefulView {
 
   destroy() {
     this.removeElement();
-    if (this.datePickerFrom) {
-      this.datePickerFrom.destroy();
-      this.datePickerFrom = null;
+
+    if (this.#datePickerFrom) {
+      this.#datePickerFrom.destroy();
+      this.#datePickerFrom = null;
     }
-    if (this.datePickerTo) {
-      this.datePickerTo.destroy();
-      this.datePickerTo = null;
+    if (this.#datePickerTo) {
+      this.#datePickerTo.destroy();
+      this.#datePickerTo = null;
     }
   }
 }
