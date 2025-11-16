@@ -1,6 +1,8 @@
 import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
+import { createOffersSection, createDestinationSection } from '../utils/form-utils.js';
 
 /**
  *@param {Object} point
@@ -21,44 +23,7 @@ const createFormEditTemplate = (point, destinations) => {
   const destinationData = destination || null;
   const destinationName = destinationData ? destinationData.name : '';
 
-  const offersTemplate = availableOffers.map((offer) => {
-    const checked = selectedOffers.includes(offer.id) ? 'checked' : '';
-    return `
-      <div class="event__offer-selector">
-        <input class="event__offer-checkbox visually-hidden"
-               id="event-offer-${offer.id}"
-               type="checkbox"
-               name="event-offer-${offer.id}" ${checked}>
-        <label class="event__offer-label" for="event-offer-${offer.id}">
-          <span class="event__offer-title">${offer.title}</span>
-          +€&nbsp;<span class="event__offer-price">${offer.price}</span>
-        </label>
-      </div>`;
-  }).join('');
-
-  const createDestinationSection = (dest) => {
-    if (!dest || !dest.description) {
-      return `
-        <section class="event__section  event__section--destination">
-          <h3 class="event__section-title event__section-title--destination">Destination</h3>
-          <p class="event__destination-description">нет данных</p>
-        </section>
-      `;
-    }
-
-    const pictures = (dest.pictures || []).map((p) => `<img class="event__photo" src="${p.src}" alt="${p.description}">`).join('');
-
-    return `
-      <section class="event__section  event__section--destination">
-        <h3 class="event__section-title event__section-title--destination">Destination</h3>
-        <p class="event__destination-description">${dest.description}</p>
-        <div class="event__photos-container">
-          <div class="event__photos-tape">${pictures}</div>
-        </div>
-      </section>
-    `;
-  };
-
+  const offersSection = createOffersSection(availableOffers, selectedOffers);
   const destinationSection = createDestinationSection(destinationData);
 
   return `
@@ -117,13 +82,7 @@ const createFormEditTemplate = (point, destinations) => {
       </header>
 
       <section class="event__details">
-        <section class="event__section  event__section--offers">
-          <h3 class="event__section-title">Offers</h3>
-          <div class="event__available-offers">
-          ${offersTemplate}
-          </div>
-        </section>
-
+        ${offersSection}
         ${destinationSection}
       </section>
     </form>
@@ -151,8 +110,6 @@ export default class FormEditPointView extends AbstractStatefulView {
       selectedOffers: point.offers ?? []
     }));
 
-    console.log('FormEditPointView состояние: ', this._state);
-
     this._restoreHandlers();
   }
 
@@ -170,6 +127,9 @@ export default class FormEditPointView extends AbstractStatefulView {
     const point = { ...state };
     point.offers = point.selectedOffers ?? [];
     delete point.availableOffers;
+    delete point.selectedOffers;
+    delete point.dateFrom;
+    delete point.dateTo;
     return point;
   }
 
@@ -240,9 +200,6 @@ export default class FormEditPointView extends AbstractStatefulView {
     // ищем офферы по новому типу
     const availableOffers = this.#offers.find((o) => o.type === newType)?.offers ?? [];
 
-    console.log('тип изменился:', newType);
-    console.log('доступные офферы: ', availableOffers);
-
     this.updateElement({
       type: newType,
       availableOffers,
@@ -265,7 +222,7 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   #handleOfferToggle = (evt) => {
     const checkbox = evt.target;
-    const offerId = Number(checkbox.id.replace('event-offer-', '')); // id из input-id
+    const offerId = Number(checkbox.id.replace('event-offer-', ''));
     const current = new Set(this._state.selectedOffers);
 
     if (checkbox.checked) {
@@ -273,10 +230,6 @@ export default class FormEditPointView extends AbstractStatefulView {
     } else {
       current.delete(offerId);
     }
-
-    const updatedOffers = Array.from(current);
-    console.log('оффер изменился:', offerId, 'checked:', checkbox.checked);
-    console.log('текущие офферы:', updatedOffers);
 
     this.updateElement({
       selectedOffers: Array.from(current)
@@ -324,6 +277,7 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   destroy() {
     this.removeElement();
+
     if (this.#datePickerFrom) {
       this.#datePickerFrom.destroy();
       this.#datePickerFrom = null;
