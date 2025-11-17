@@ -1,3 +1,5 @@
+import { UpdateType } from '../consts/update-type.js';
+import { UserAction } from '../consts/user-action.js';
 import { remove, render, replace, RenderPosition } from '../framework/render.js';
 import EventItemView from '../view/event-item-view.js';
 import FormEditPointView from '../view/form-edit-point-view.js';
@@ -44,6 +46,7 @@ export default class PointPresenter {
     this.#pointComponent.setFavoriteClickHandler(this.#handleFavoriteClick);
     this.#pointEditComponent.setCloseClickHandler(this.#handleCloseForm);
     this.#pointEditComponent.setFormSubmitHandler(this.#handleFormSubmit);
+    this.#pointEditComponent.setDeleteClickHandler(this.#handleDeleteClick);
 
     if (!prevPoint || !prevEdit) {
       render(this.#pointComponent, this.#pointListContainer, RenderPosition.BEFOREEND);
@@ -106,12 +109,17 @@ export default class PointPresenter {
       ...this.#point,
       isFavorite: !this.#point.isFavorite
     };
-    this.#onDataChange(updatedPoint);
+    this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatedPoint);
   };
 
   #handleFormSubmit = (updatePoint) => {
-    this.#onDataChange(updatePoint);
+    this.point = updatePoint;
+    this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatePoint);
     this.#replaceEditToCard();
+  };
+
+  #handleDeleteClick = () => {
+    this.#onDataChange(UserAction.DELETE_POINT, UpdateType.MINOR, this.#point.id);
   };
 
   #initFlatpickr() {

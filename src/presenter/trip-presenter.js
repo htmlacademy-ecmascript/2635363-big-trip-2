@@ -7,7 +7,8 @@ import { remove, render, RenderPosition } from '../framework/render.js';
 import PointPresenter from './point-presenter.js';
 import { filterPoints, sortPoints } from '../utils/points.js';
 import { UpdateType } from '../consts/update-type.js';
-import { filterType } from '../model/filter-model.js';
+import { UserAction } from '../consts/user-action.js';
+
 
 export default class TripPresenter {
   #tripEventsContainer;
@@ -123,8 +124,20 @@ export default class TripPresenter {
     this.#pointPresenters.clear();
   }
 
-  #handlePointChange = (updatedPoint) => {
-    this.#tripModel.updatePoints(UpdateType.PATCH, updatedPoint);
+  #handlePointChange = (action, updateType, payload) => {
+    switch (action) {
+      case UserAction.UPDATE_POINT:
+        this.#tripModel.updatePoint(updateType, payload);
+        break;
+      case UserAction.ADD_POINT:
+        this.#tripModel.addPoint(updateType, payload);
+        break;
+      case UserAction.DELETE_POINT:
+        this.#tripModel.deletePoint(updateType, payload);
+        break;
+      default:
+        throw new Error(`неизвестное действие в #handlePointChange: ${action}`);
+    }
   };
 
   #handleModeChange = () => {
@@ -140,17 +153,18 @@ export default class TripPresenter {
 
   #handleNewEventClick = () => {
     // this.#clearPointPresenters();
+    this.#handleModeChange();
 
-    // this.#filterModel.setFilter(UpdateType.MAJOR, filterType.EVERYTHING);
-    // this.#currentSortType = 'day';
-    // this.#renderSorting();
+    this.#filterModel.setFilter(UpdateType.MAJOR, 'everything');
+    this.#currentSortType = 'day';
+    this.#renderSorting();
 
     this.#newEventButton.disabled = true;
 
     const newPoint = {
       id: `tmp-${Date.now()}`, // временный id
       type: this.allTypes[0],
-      destination: '',
+      destination: this.#tripModel.getDestinations()[0],
       dateFrom: new Date(),
       dateTo: new Date(),
       basePrice: 0,
@@ -209,7 +223,5 @@ export default class TripPresenter {
     }
     this.#clearPointPresenters();
     this.#renderEventsList();
-    this.#currentSortType = 'day';
-    this.#renderSorting();
   };
 }

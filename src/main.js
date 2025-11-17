@@ -1,15 +1,16 @@
-import points from './mock/points';
 import TripPresenter from './presenter/trip-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import FilterModel from './model/filter-model.js';
 import TripModel from './model/points-model.js';
+
+import points from './mock/points.js';
 import destinations from './mock/destination.js';
 import offersByType from './mock/offer.js';
 
 const tripControlsContainer = document.querySelector('.trip-controls__filters');
 const tripEventsContainer = document.querySelector('.trip-events');
 
-const tripModel = new TripModel();
+const tripModel = new TripModel({ points, destinations, offersByType });
 const filterModel = new FilterModel();
 
 const tripPresenter = new TripPresenter({

@@ -1,14 +1,8 @@
 import Observable from '../framework/observable.js';
-
-export const filterType = {
-  EVERYTHING: 'everything',
-  FUTURE: 'future',
-  PRESENT: 'present',
-  PAST: 'past'
-};
+import { filterPoints } from '../utils/points';
 
 export default class FilterModel extends Observable {
-  #filter = filterType.EVERYTHING;
+  #filter = filterPoints([], 'everything');
 
   get filter() {
     return this.#filter;
