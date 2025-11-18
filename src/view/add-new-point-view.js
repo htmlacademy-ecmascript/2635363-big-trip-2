@@ -105,6 +105,8 @@ export default class FormNewPointView extends AbstractStatefulView {
 
     this._setState(FormNewPointView.parsePointToState({
       ...point,
+      dateFrom: point.dateFrom ?? new Date(),
+      dateTo: point.dateTo ?? new Date(),
       availableOffers,
       selectedOffers: point.offers ?? []
     }));
@@ -115,20 +117,33 @@ export default class FormNewPointView extends AbstractStatefulView {
   static parsePointToState(point) {
     return {
       ...point,
-      dateFrom: point.dateFrom ?? null,
-      dateTo: point.dateTo ?? null,
+      dateFrom: point.dateFrom ?? new Date(),
+      dateTo: point.dateTo ?? new Date(),
       availableOffers: point.availableOffers ?? [],
       selectedOffers: point.selectedOffers ?? []
     };
   }
 
   static parseStateToPoint(state) {
-    const point = { ...state };
-    point.offers = point.selectedOffers ?? [];
-    delete point.availableOffers;
-    delete point.selectedOffers;
-    delete point.dateFrom;
-    delete point.dateTo;
+    const safeDate = (value) => {
+      const d = new Date(value);
+      return isNaN(d) ? new Date() : d;
+    };
+
+    const offers = state.availableOffers
+      .filter((o) => state.selectedOffers.includes(o.id));
+
+    const point = {
+      id: state.id,
+      type: state.type,
+      destination: state.destination,
+      basePrice: Number(state.basePrice),
+      dateFrom: safeDate(state.dateFrom),
+      dateTo: safeDate(state.dateTo),
+      offers,
+      isFavorite: state.isFavorite ?? false
+    };
+
     return point;
   }
 
@@ -137,6 +152,7 @@ export default class FormNewPointView extends AbstractStatefulView {
   }
 
   _restoreHandlers() {
+
     this.element.querySelector('form')
       ?.addEventListener('submit', this.#handleFormSubmit);
 
@@ -147,9 +163,10 @@ export default class FormNewPointView extends AbstractStatefulView {
       .forEach((radioInput) => {
         radioInput.addEventListener('change', this.#handleTypeChange);
       });
-
     this.element.querySelector('.event__input--destination')
       ?.addEventListener('change', this.#handleDestinationChange);
+    this.element.querySelector('.event__input--price')
+      ?.addEventListener('input', this.#handlePriceInput);
 
     this.element.querySelectorAll('.event__offer-checkbox')
       .forEach((cb) => cb.addEventListener('change', this.#handleOfferToggle));
@@ -192,6 +209,7 @@ export default class FormNewPointView extends AbstractStatefulView {
   }
 
   #handleTypeChange = (evt) => {
+
     const newType = evt.target.value;
     const availableOffers = this.#offers.find((o) => o.type === newType)?.offers ?? [];
 
@@ -204,6 +222,8 @@ export default class FormNewPointView extends AbstractStatefulView {
 
   #handleDestinationChange = (evt) => {
     const newDestinationName = evt.target.value;
+
+    // объявляем newDestination ДО логирования!
     const newDestination = this.#destinations.find((destination) => destination.name === newDestinationName);
 
     if (!newDestination) {
@@ -244,10 +264,58 @@ export default class FormNewPointView extends AbstractStatefulView {
     });
   };
 
+  #handlePriceInput = (evt) => {
+    const value = evt.target.value.trim();
+
+    // если число валидное — сбросить ошибку
+    if (/^\d+$/.test(value)) {
+      evt.target.setCustomValidity('');
+    }
+
+    // обновляем state, но без перерисовки всей формы
+    this._setState({
+      ...this._state,
+      basePrice: value
+    });
+  };
+
   #handleFormSubmit = (evt) => {
     evt.preventDefault();
-    this._callback.submit?.(FormNewPointView.parseStateToPoint(this._state));
+
+    const form = this.element.querySelector('form');
+    const destInput = form.querySelector('.event__input--destination');
+    const priceInput = form.querySelector('.event__input--price');
+
+    const destValue = destInput.value.trim();
+    const priceValue = priceInput.value.trim();
+
+    const isValidDestination = this.#destinations.find((d) => d.name === destValue);
+    if (!isValidDestination) {
+      destInput.setCustomValidity('Выберите пункт назначения из списка');
+      destInput.reportValidity();
+      return;
+    } else {
+      destInput.setCustomValidity('');
+    }
+
+    const priceNumber = Number(priceValue);
+    if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+      priceInput.setCustomValidity('Цена должна быть положительным числом');
+      priceInput.reportValidity();
+      return;
+    } else {
+      priceInput.setCustomValidity('');
+    }
+
+    const finalState = {
+      ...this._state,
+      basePrice: priceNumber,
+      destination: isValidDestination
+    };
+
+    this._callback.submit?.(this.constructor.parseStateToPoint(finalState));
   };
+
 
   setFormSubmitHandler(callback) {
     this._callback.submit = callback;

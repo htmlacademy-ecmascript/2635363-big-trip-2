@@ -128,8 +128,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     point.offers = point.selectedOffers ?? [];
     delete point.availableOffers;
     delete point.selectedOffers;
-    delete point.dateFrom;
-    delete point.dateTo;
+
     return point;
   }
 
@@ -153,6 +152,8 @@ export default class FormEditPointView extends AbstractStatefulView {
       });
     this.element.querySelector('.event__input--destination')
       ?.addEventListener('change', this.#handleDestinationChange);
+    this.element.querySelector('.event__input--price')
+      ?.addEventListener('input', this.#handlePriceInput);
 
     this.element.querySelectorAll('.event__offer-checkbox')
       .forEach((cb) => cb.addEventListener('change', this.#handleOfferToggle));
@@ -248,9 +249,58 @@ export default class FormEditPointView extends AbstractStatefulView {
     });
   };
 
+  #handlePriceInput = (evt) => {
+    const value = evt.target.value.trim();
+
+    // если число валидное — сбросить ошибку
+    if (/^\d+$/.test(value)) {
+      evt.target.setCustomValidity('');
+    }
+
+    // обновляем state, но без перерисовки всей формы
+    this._setState({
+      ...this._state,
+      basePrice: value
+    });
+  };
+
   #handleFormSubmit = (evt) => {
     evt.preventDefault();
-    this._callback.submit?.(FormEditPointView.parseStateToPoint(this._state));
+
+    const form = this.element.querySelector('form');
+    const destInput = form.querySelector('.event__input--destination');
+    const priceInput = form.querySelector('.event__input--price');
+
+    const destValue = destInput.value.trim();
+    const priceValue = priceInput.value.trim();
+
+    const isValidDestination = this.#destinations.find((d) => d.name === destValue);
+
+    if (!isValidDestination) {
+      destInput.setCustomValidity('Выберите пункт назначения из списка');
+      destInput.reportValidity();
+      return;
+    } else {
+      destInput.setCustomValidity('');
+    }
+
+    const priceNumber = Number(priceValue);
+
+    if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+      priceInput.setCustomValidity('Цена должна быть положительным числом');
+      priceInput.reportValidity();
+      return;
+    } else {
+      priceInput.setCustomValidity('');
+    }
+
+    const finalState = {
+      ...this._state,
+      basePrice: priceNumber,
+      destination: isValidDestination
+    };
+
+    this._callback.submit?.(this.constructor.parseStateToPoint(finalState));
   };
 
   setFormSubmitHandler(callback) {
