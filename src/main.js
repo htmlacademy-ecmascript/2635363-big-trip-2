@@ -2,15 +2,18 @@ import TripPresenter from './presenter/trip-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import FilterModel from './model/filter-model.js';
 import TripModel from './model/points-model.js';
+import TripApiService from './point-api-service/trip-api-service.js';
 
-import points from './mock/points.js';
-import destinations from './mock/destination.js';
-import offersByType from './mock/offer.js';
+const AUTHORIZATION = 'Basic auth12345qwerty';
+const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip';
 
 const tripControlsContainer = document.querySelector('.trip-controls__filters');
 const tripEventsContainer = document.querySelector('.trip-events');
 
-const tripModel = new TripModel({ points, destinations, offersByType });
+const apiService = new TripApiService(END_POINT, AUTHORIZATION);
+
+const tripModel = new TripModel({ apiService });
+
 const filterModel = new FilterModel();
 
 const tripPresenter = new TripPresenter({
@@ -26,5 +29,7 @@ const filterPresenter = new FilterPresenter({
   pointsModel: tripModel
 });
 
-tripPresenter.init();
-filterPresenter.init();
+tripModel.init().finally(() => {
+  tripPresenter.init();
+  filterPresenter.init();
+});
