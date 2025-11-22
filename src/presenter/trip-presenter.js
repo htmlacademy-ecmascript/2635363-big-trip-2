@@ -130,13 +130,13 @@ export default class TripPresenter {
     switch (action) {
       case UserAction.UPDATE_POINT: {
         const presenter = this.#pointPresenters.get(payload.id);
-        presenter.setSaving(); // показываем состояние "сохраняется"
+        presenter.setSaving();
 
         try {
           await this.#tripModel.updatePoint(updateType, payload);
-          presenter.resetView(); // сброс состояния формы после успешного ответа
+          presenter.resetView();
         } catch (err) {
-          presenter.setAborting(); // shake, если ошибка
+          presenter.setAborting();
         }
         break;
       }

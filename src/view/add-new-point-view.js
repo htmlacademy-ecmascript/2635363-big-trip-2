@@ -101,10 +101,14 @@ export default class FormNewPointView extends AbstractStatefulView {
     this.#destinations = destinations;
     this.#offers = offers;
 
-    const availableOffers = this.#offers.find((o) => o.type === point.type)?.offers ?? [];
+    const initialType = point.type ?? 'flight';
+
+    const availableOffers =
+      this.#offers.find((o) => o.type === initialType)?.offers ?? [];
 
     this._setState(FormNewPointView.parsePointToState({
       ...point,
+      type: initialType,
       dateFrom: point.dateFrom ?? new Date(),
       dateTo: point.dateTo ?? new Date(),
       availableOffers,
@@ -115,7 +119,7 @@ export default class FormNewPointView extends AbstractStatefulView {
   }
 
   static parsePointToState(point) {
-    const defaultType = point.type ?? 'taxi';
+    const defaultType = point.type ?? 'flight';
 
     return {
       ...point,
