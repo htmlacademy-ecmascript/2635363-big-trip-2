@@ -115,12 +115,18 @@ export default class FormNewPointView extends AbstractStatefulView {
   }
 
   static parsePointToState(point) {
+    const defaultType = point.type ?? 'taxi';
+
     return {
       ...point,
+      type: defaultType,
+      destination: point.destination ?? null,
       dateFrom: point.dateFrom ?? new Date(),
       dateTo: point.dateTo ?? new Date(),
-      availableOffers: point.availableOffers ?? [],
-      selectedOffers: point.selectedOffers ?? []
+      basePrice: point.basePrice ?? 0,
+      isFavorite: point.isFavorite ?? false,
+      availableOffers: point.availableOffers,
+      selectedOffers: point.selectedOffers
     };
   }
 
@@ -133,10 +139,19 @@ export default class FormNewPointView extends AbstractStatefulView {
     const offers = state.availableOffers
       .filter((o) => state.selectedOffers.includes(o.id));
 
+    const destination = state.destination
+      ? {
+        id: state.destination.id,
+        name: state.destination.name,
+        description: state.destination.description || '',
+        pictures: state.destination.pictures || []
+      }
+      : null;
+
     const point = {
       id: state.id,
       type: state.type,
-      destination: state.destination,
+      destination,
       basePrice: Number(state.basePrice),
       dateFrom: safeDate(state.dateFrom),
       dateTo: safeDate(state.dateTo),
@@ -237,7 +252,7 @@ export default class FormNewPointView extends AbstractStatefulView {
 
   #handleOfferToggle = (evt) => {
     const checkbox = evt.target;
-    const offerId = Number(checkbox.id.replace('event-offer-', ''));
+    const offerId = checkbox.dataset.offerId ?? checkbox.id.replace('event-offer-', '');
     const current = new Set(this._state.selectedOffers);
 
     if (checkbox.checked) {
@@ -250,7 +265,6 @@ export default class FormNewPointView extends AbstractStatefulView {
       selectedOffers: Array.from(current)
     });
   };
-
 
   #handleDateFromChange = ([selectedDate]) => {
     this.updateElement({
@@ -309,8 +323,10 @@ export default class FormNewPointView extends AbstractStatefulView {
 
     const finalState = {
       ...this._state,
-      basePrice: priceNumber,
-      destination: isValidDestination
+      basePrice: Number(priceValue),
+      destination: isValidDestination,
+      dateFrom: this._state.dateFrom.toISOString(),
+      dateTo: this._state.dateTo.toISOString(),
     };
 
     this._callback.submit?.(this.constructor.parseStateToPoint(finalState));

@@ -112,14 +112,21 @@ export default class PointPresenter {
     this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatedPoint);
   };
 
-  #handleFormSubmit = (updatePoint) => {
-    this.point = updatePoint;
-    this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatePoint);
-    this.#replaceEditToCard();
+  #handleFormSubmit = async (updatePoint) => {
+    try {
+      await this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatePoint);
+      this.#replaceEditToCard();
+    } catch (err) {
+      alert('Не удалось обновить точку на сервере');
+    }
   };
 
-  #handleDeleteClick = () => {
-    this.#onDataChange(UserAction.DELETE_POINT, UpdateType.MINOR, this.#point.id);
+  #handleDeleteClick = async () => {
+    try {
+      await this.#onDataChange(UserAction.DELETE_POINT, UpdateType.MINOR, this.#point.id);
+    } catch (err) {
+      alert('Не удалось удалить точку на сервере');
+    }
   };
 
   #initFlatpickr() {
