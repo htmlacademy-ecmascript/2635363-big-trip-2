@@ -14,6 +14,7 @@ export default class TripPresenter {
   #tripEventsContainer;
   #tripModel;
   #filterModel;
+  #eventListComponent = null;
 
   #pointPresenters = new Map();
 
@@ -41,12 +42,10 @@ export default class TripPresenter {
   init() {
     this.#renderSorting();
     this.#initNewEventButton();
-    this.#isLoading = true;
 
-    setTimeout(() => {
-      this.#isLoading = false;
-      this.#renderEventsList();
-    }, 500);
+    this.#eventListComponent = new EventListView();
+    render(this.#eventListComponent, this.#tripEventsContainer);
+    this.#renderEventsList();
   }
 
   #getFilteredSortedPoints() {
@@ -59,20 +58,19 @@ export default class TripPresenter {
   #renderEventsList() {
     this.#clearEventsContainer();
 
-    const eventsListComponent = new EventListView();
-    render(eventsListComponent, this.#tripEventsContainer, RenderPosition.BEFOREEND);
-    const listContainer = eventsListComponent.element;
+    const listContainer = this.#eventListComponent.element;
 
     if (this.#isLoading) {
       this.#loadingComponent = new LoadingView();
-      render(this.#loadingComponent, listContainer, RenderPosition.AFTERBEGIN);
+      render(this.#loadingComponent, listContainer);
       return;
     }
 
     const points = this.#getFilteredSortedPoints();
+
     if (points.length === 0) {
       this.#listEmptyComponent = new ListEmptyView(this.#filterModel.filter);
-      render(this.#listEmptyComponent, listContainer, RenderPosition.AFTERBEGIN);
+      render(this.#listEmptyComponent, listContainer);
       return;
     }
 
@@ -113,8 +111,12 @@ export default class TripPresenter {
 
   #clearEventsContainer() {
     this.#clearPointPresenters();
+
+    this.#eventListComponent.element.innerHTML = '';
+
     remove(this.#loadingComponent);
     remove(this.#listEmptyComponent);
+
     this.#loadingComponent = null;
     this.#listEmptyComponent = null;
   }
@@ -124,17 +126,36 @@ export default class TripPresenter {
     this.#pointPresenters.clear();
   }
 
-  #handlePointChange = (action, updateType, payload) => {
+  #handlePointChange = async (action, updateType, payload) => {
     switch (action) {
-      case UserAction.UPDATE_POINT:
-        this.#tripModel.updatePoint(updateType, payload);
+      case UserAction.UPDATE_POINT: {
+        const presenter = this.#pointPresenters.get(payload.id);
+        presenter.setSaving();
+
+        try {
+          await this.#tripModel.updatePoint(updateType, payload);
+          presenter.resetView();
+        } catch (err) {
+          presenter.setAborting();
+        }
         break;
+      }
       case UserAction.ADD_POINT:
-        this.#tripModel.addPoint(updateType, payload);
+        try {
+          await this.#tripModel.addPoint(updateType, payload);
+        } catch (err) {
+          alert('Не удалось добавить точку на сервер');
+        }
         break;
+
       case UserAction.DELETE_POINT:
-        this.#tripModel.deletePoint(updateType, payload);
+        try {
+          await this.#tripModel.deletePoint(updateType, payload);
+        } catch (err) {
+          alert('Не удалось удалить точку на сервер');
+        }
         break;
+
       default:
         throw new Error(`неизвестное действие в #handlePointChange: ${action}`);
     }
@@ -187,10 +208,14 @@ export default class TripPresenter {
       this.#removeEscHandler();
     };
 
-    // при сабмите формы — добавлиние в модель
-    formComponent.setFormSubmitHandler((point) => {
-      this.#tripModel.addPoint(UpdateType.MINOR, point);
-      closeForm();
+
+    formComponent.setFormSubmitHandler(async (point) => {
+      try {
+        await this.#tripModel.addPoint(UpdateType.MINOR, point);
+        closeForm();
+      } catch (err) {
+        alert('Не удалось добавить точку на сервер');
+      }
     });
 
     formComponent.setCancelClickHandler(closeForm);
@@ -217,11 +242,24 @@ export default class TripPresenter {
   };
 
   #handleModelEvent = (updateType) => {
-    if (updateType === UpdateType.MAJOR) {
-      this.#currentSortType = 'day';
-      this.#renderSorting();
+    switch (updateType) {
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        this.#clearPointPresenters();
+        this.#renderEventsList();
+        break;
+
+      case UpdateType.MAJOR:
+        this.#currentSortType = 'day';
+        this.#renderSorting();
+        this.#clearPointPresenters();
+        this.#renderEventsList();
+        break;
+
+      default:
+        this.#clearPointPresenters();
+        this.#renderEventsList();
+        break;
     }
-    this.#clearPointPresenters();
-    this.#renderEventsList();
   };
 }

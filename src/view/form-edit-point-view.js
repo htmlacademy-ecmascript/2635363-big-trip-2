@@ -223,7 +223,7 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   #handleOfferToggle = (evt) => {
     const checkbox = evt.target;
-    const offerId = Number(checkbox.id.replace('event-offer-', ''));
+    const offerId = checkbox.dataset.offerId ?? checkbox.id.replace('event-offer-', '');
     const current = new Set(this._state.selectedOffers);
 
     if (checkbox.checked) {
@@ -296,11 +296,17 @@ export default class FormEditPointView extends AbstractStatefulView {
 
     const finalState = {
       ...this._state,
-      basePrice: priceNumber,
-      destination: isValidDestination
+      basePrice: Number(priceValue),
+      destination: isValidDestination,
+      dateFrom: this._state.dateFrom.toISOString(),
+      dateTo: this._state.dateTo.toISOString(),
     };
 
-    this._callback.submit?.(this.constructor.parseStateToPoint(finalState));
+    const pointToSend = this.constructor.parseStateToPoint(finalState);
+
+    console.log('Submitting point to server:', pointToSend);
+
+    this._callback.submit?.(pointToSend);
   };
 
   setFormSubmitHandler(callback) {
