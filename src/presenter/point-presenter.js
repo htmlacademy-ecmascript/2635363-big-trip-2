@@ -80,7 +80,7 @@ export default class PointPresenter {
   // ---------- внутренние переходы ----------
   #replaceCardToEdit() {
     replace(this.#pointEditComponent, this.#pointComponent);
-    this.#onModeChange(); // сообщаем TripPresenter закрыть другие
+    this.#onModeChange();
     this.#initFlatpickr();
     this.#addEscHandler();
     this.#isEditing = true;
@@ -113,19 +113,21 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = async (updatePoint) => {
+    this.setSaving();
     try {
       await this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatePoint);
       this.#replaceEditToCard();
     } catch (err) {
-      alert('Не удалось обновить точку на сервере');
+      this.setAborting();
     }
   };
 
   #handleDeleteClick = async () => {
+    this.setDeleting();
     try {
       await this.#onDataChange(UserAction.DELETE_POINT, UpdateType.MINOR, this.#point.id);
     } catch (err) {
-      alert('Не удалось удалить точку на сервере');
+      this.setAborting();
     }
   };
 
@@ -166,5 +168,53 @@ export default class PointPresenter {
       this.#replaceEditToCard();
     }
   };
+
+  setFavoriteToggling() {
+    this.#pointComponent.updateElement({ isDisabled: true });
+  }
+
+  unsetFavoriteToggling() {
+    this.#pointComponent.updateElement({ isDisabled: false });
+  }
+
+  setSaving() {
+    this.#pointEditComponent.updateElement({
+      isSaving: true,
+      isDisabled: true
+    });
+  }
+
+  unsetSaving() {
+    this.#pointEditComponent.updateElement({
+      isSaving: false,
+      isDisabled: false
+    });
+  }
+
+  setDeleting() {
+    this.#pointEditComponent.updateElement({
+      isDeleting: true,
+      isDisabled: true
+    });
+  }
+
+  unsetDeleting() {
+    this.#pointEditComponent.updateElement({
+      isDeleting: false,
+      isDisabled: false
+    });
+  }
+
+  setAborting() {
+    const resetState = {
+      isSaving: false,
+      isDeleting: false,
+      isDisabled: false
+    };
+
+    this.#pointEditComponent.shake(() => {
+      this.#pointEditComponent.updateElement(resetState);
+    });
+  }
 }
 

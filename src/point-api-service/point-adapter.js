@@ -14,13 +14,20 @@ export const adaptPointToClient = (point, destinations, offersByType) => ({
     .filter(Boolean),
 });
 
-export const adaptPointToServer = (point) => ({
-  'id': point.id,
-  'type': point.type,
-  'date_from': point.dateFrom instanceof Date ? point.dateFrom.toISOString() : null,
-  'date_to': point.dateTo instanceof Date ? point.dateTo.toISOString() : null,
-  'base_price': point.basePrice,
-  'is_favorite': point.isFavorite,
-  'destination': point.destination?.id || point.destination || null,
-  'offers': point.offers.map((offer) => offer.id)
-});
+export const adaptPointToServer = (point) => {
+  const adapted = {
+    'type': point.type,
+    'date_from': point.dateFrom instanceof Date ? point.dateFrom.toISOString() : point.dateFrom || null,
+    'date_to': point.dateTo instanceof Date ? point.dateTo.toISOString() : point.dateTo || null,
+    'base_price': point.basePrice,
+    'is_favorite': point.isFavorite,
+    'destination': point.destination?.id || point.destination || null,
+    'offers': point.offers.map((offer) => offer.id || offer)
+  };
+
+  if (point.id && !point.id.startsWith('tmp-')) {
+    adapted.id = point.id;
+  }
+
+  return adapted;
+};
