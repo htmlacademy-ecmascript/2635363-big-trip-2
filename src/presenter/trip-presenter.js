@@ -22,6 +22,7 @@ export default class TripPresenter {
   #loadingComponent = null;
   #sortingComponent = null;
   #isLoading = true;
+  #isProcessing = false;
   #newEventButton = null;
   #currentSortType = 'day';
 
@@ -43,8 +44,16 @@ export default class TripPresenter {
     this.#renderSorting();
     this.#initNewEventButton();
 
-    this.#eventListComponent = new EventListView();
-    render(this.#eventListComponent, this.#tripEventsContainer);
+    if (!this.#eventListComponent) {
+      this.#eventListComponent = new EventListView();
+      render(this.#eventListComponent, this.#tripEventsContainer);
+    }
+
+    if (this.#isLoading) {
+      this.#loadingComponent = new LoadingView();
+      render(this.#loadingComponent, this.#eventListComponent.element);
+    }
+
     this.#renderEventsList();
   }
 
@@ -61,6 +70,12 @@ export default class TripPresenter {
     const listContainer = this.#eventListComponent.element;
 
     if (this.#isLoading) {
+      this.#loadingComponent = new LoadingView();
+      render(this.#loadingComponent, listContainer);
+      return;
+    }
+
+    if (this.#isProcessing) {
       this.#loadingComponent = new LoadingView();
       render(this.#loadingComponent, listContainer);
       return;
@@ -112,6 +127,9 @@ export default class TripPresenter {
   #clearEventsContainer() {
     this.#clearPointPresenters();
 
+    if (!this.#eventListComponent?.element) {
+      return;
+    }
     this.#eventListComponent.element.innerHTML = '';
 
     remove(this.#loadingComponent);
@@ -129,35 +147,33 @@ export default class TripPresenter {
   #handlePointChange = async (action, updateType, payload) => {
     switch (action) {
       case UserAction.UPDATE_POINT: {
-        const presenter = this.#pointPresenters.get(payload.id);
-        presenter.setSaving();
-
         try {
           await this.#tripModel.updatePoint(updateType, payload);
-          presenter.resetView();
         } catch (err) {
-          presenter.setAborting();
+          const presenter = this.#pointPresenters.get(payload.id);
+          presenter?.setAborting();
         }
         break;
       }
-      case UserAction.ADD_POINT:
+
+      case UserAction.ADD_POINT: {
         try {
           await this.#tripModel.addPoint(updateType, payload);
         } catch (err) {
-          alert('Не удалось добавить точку на сервер');
+          throw new Error('Не удалось добавить точку на сервер');
         }
         break;
+      }
 
-      case UserAction.DELETE_POINT:
+      case UserAction.DELETE_POINT: {
         try {
           await this.#tripModel.deletePoint(updateType, payload);
         } catch (err) {
-          alert('Не удалось удалить точку на сервер');
+          const presenter = this.#pointPresenters.get(payload);
+          presenter?.setAborting();
         }
         break;
-
-      default:
-        throw new Error(`неизвестное действие в #handlePointChange: ${action}`);
+      }
     }
   };
 
@@ -173,7 +189,6 @@ export default class TripPresenter {
   }
 
   #handleNewEventClick = () => {
-    // this.#clearPointPresenters();
     this.#handleModeChange();
 
     this.#filterModel.setFilter(UpdateType.MAJOR, 'everything');
@@ -183,7 +198,7 @@ export default class TripPresenter {
     this.#newEventButton.disabled = true;
 
     const newPoint = {
-      id: `tmp-${Date.now()}`, // временный id
+      id: `tmp-${Date.now()}`,
       type: this.allTypes[0],
       destination: this.#tripModel.getDestinations()[0],
       dateFrom: new Date(),
@@ -210,11 +225,17 @@ export default class TripPresenter {
 
 
     formComponent.setFormSubmitHandler(async (point) => {
+      this.#newEventButton.disabled = true;
+      formComponent.updateElement({ isDisabled: true, isSaving: true });
+
       try {
         await this.#tripModel.addPoint(UpdateType.MINOR, point);
         closeForm();
       } catch (err) {
-        alert('Не удалось добавить точку на сервер');
+        formComponent.shake(() => {
+          formComponent.updateElement({ isDisabled: false, isSaving: false });
+          this.#newEventButton.disabled = false;
+        });
       }
     });
 
@@ -242,6 +263,11 @@ export default class TripPresenter {
   };
 
   #handleModelEvent = (updateType) => {
+    if (!this.#eventListComponent) {
+      this.#eventListComponent = new EventListView();
+      render(this.#eventListComponent, this.#tripEventsContainer);
+    }
+
     switch (updateType) {
       case UpdateType.INIT:
         this.#isLoading = false;
