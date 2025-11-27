@@ -12,7 +12,9 @@ const createFormNewPointTemplate = (point, destinations) => {
     type,
     destination,
     availableOffers = [],
-    selectedOffers = []
+    selectedOffers = [],
+    isDisabled = false,
+    isSaving = false
   } = point;
 
   const destinationData = destination || null;
@@ -75,8 +77,13 @@ const createFormNewPointTemplate = (point, destinations) => {
           value="${basePrice}">
         </div>
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        <button class="event__save-btn btn btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>
+          ${isSaving ? 'Saving...' : 'Save'}
+        </button>
+
+        <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>
+          Cancel
+        </button>
       </header>
 
       <section class="event__details">
@@ -242,7 +249,6 @@ export default class FormNewPointView extends AbstractStatefulView {
   #handleDestinationChange = (evt) => {
     const newDestinationName = evt.target.value;
 
-    // объявляем newDestination ДО логирования!
     const newDestination = this.#destinations.find((destination) => destination.name === newDestinationName);
 
     if (!newDestination) {
@@ -285,12 +291,10 @@ export default class FormNewPointView extends AbstractStatefulView {
   #handlePriceInput = (evt) => {
     const value = evt.target.value.trim();
 
-    // если число валидное — сбросить ошибку
     if (/^\d+$/.test(value)) {
       evt.target.setCustomValidity('');
     }
 
-    // обновляем state, но без перерисовки всей формы
     this._setState({
       ...this._state,
       basePrice: value
@@ -352,6 +356,38 @@ export default class FormNewPointView extends AbstractStatefulView {
 
   setCancelClickHandler(callback) {
     this._callback.cancel = callback;
+  }
+
+  setSaving() {
+    this._setState({
+      ...this._state,
+      isSaving: true,
+      isDisabled: true
+    });
+  }
+
+  setDeleting() {
+    this._setState({
+      ...this._state,
+      isDeleting: true,
+      isDisabled: true
+    });
+  }
+
+  resetSaving() {
+    this._setState({
+      ...this._state,
+      isSaving: false,
+      isDisabled: false
+    });
+  }
+
+  resetDeleting() {
+    this._setState({
+      ...this._state,
+      isDeleting: false,
+      isDisabled: false
+    });
   }
 
   destroy() {

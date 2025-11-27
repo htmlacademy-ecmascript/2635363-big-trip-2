@@ -12,7 +12,7 @@ import { UserAction } from '../consts/user-action.js';
 
 export default class TripPresenter {
   #tripEventsContainer;
-  #tripModel;
+  #pointModel;
   #filterModel;
   #eventListComponent = null;
 
@@ -28,13 +28,13 @@ export default class TripPresenter {
   constructor({ tripEventsContainer, pointsModel, filterModel }) {
     this.#tripEventsContainer = tripEventsContainer;
 
-    this.#tripModel = pointsModel;
+    this.#pointModel = pointsModel;
     this.#filterModel = filterModel;
 
-    this.#tripModel.addObserver(this.#handleModelEvent);
+    this.#pointModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
 
-    this.allTypes = this.#tripModel.getOffersByType().map((offer) => offer.type);
+    this.allTypes = this.#pointModel.getOffersByType().map((offer) => offer.type);
 
     this.#onEscCloseNewForm = this.#onEscCloseNewForm.bind(this);
   }
@@ -43,14 +43,22 @@ export default class TripPresenter {
     this.#renderSorting();
     this.#initNewEventButton();
 
-    this.#eventListComponent = new EventListView();
-    render(this.#eventListComponent, this.#tripEventsContainer);
+    if (!this.#eventListComponent) {
+      this.#eventListComponent = new EventListView();
+      render(this.#eventListComponent, this.#tripEventsContainer);
+    }
+
+    if (this.#isLoading) {
+      this.#loadingComponent = new LoadingView();
+      render(this.#loadingComponent, this.#eventListComponent.element);
+    }
+
     this.#renderEventsList();
   }
 
   #getFilteredSortedPoints() {
     const currentFilter = this.#filterModel.filter;
-    const allPoints = this.#tripModel.getPoints();
+    const allPoints = this.#pointModel.getPoints();
     const filtered = filterPoints(allPoints, currentFilter);
     return sortPoints(filtered, this.#currentSortType);
   }
@@ -80,7 +88,7 @@ export default class TripPresenter {
   #renderPoint(container, point) {
     const pointPresenter = new PointPresenter({
       pointListContainer: container,
-      tripModel: this.#tripModel,
+      pointModel: this.#pointModel,
       onDataChange: this.#handlePointChange,
       onModeChange: this.#handleModeChange
     });
@@ -112,6 +120,9 @@ export default class TripPresenter {
   #clearEventsContainer() {
     this.#clearPointPresenters();
 
+    if (!this.#eventListComponent?.element) {
+      return;
+    }
     this.#eventListComponent.element.innerHTML = '';
 
     remove(this.#loadingComponent);
@@ -129,35 +140,33 @@ export default class TripPresenter {
   #handlePointChange = async (action, updateType, payload) => {
     switch (action) {
       case UserAction.UPDATE_POINT: {
-        const presenter = this.#pointPresenters.get(payload.id);
-        presenter.setSaving();
-
         try {
-          await this.#tripModel.updatePoint(updateType, payload);
-          presenter.resetView();
+          await this.#pointModel.updatePoint(updateType, payload);
         } catch (err) {
-          presenter.setAborting();
+          const presenter = this.#pointPresenters.get(payload.id);
+          presenter?.setAborting();
         }
         break;
       }
-      case UserAction.ADD_POINT:
+
+      case UserAction.ADD_POINT: {
         try {
-          await this.#tripModel.addPoint(updateType, payload);
+          await this.#pointModel.addPoint(updateType, payload);
         } catch (err) {
-          alert('Не удалось добавить точку на сервер');
+          throw new Error('Не удалось добавить точку на сервер');
         }
         break;
+      }
 
-      case UserAction.DELETE_POINT:
+      case UserAction.DELETE_POINT: {
         try {
-          await this.#tripModel.deletePoint(updateType, payload);
+          await this.#pointModel.deletePoint(updateType, payload);
         } catch (err) {
-          alert('Не удалось удалить точку на сервер');
+          const presenter = this.#pointPresenters.get(payload);
+          presenter?.setAborting();
         }
         break;
-
-      default:
-        throw new Error(`неизвестное действие в #handlePointChange: ${action}`);
+      }
     }
   };
 
@@ -173,7 +182,6 @@ export default class TripPresenter {
   }
 
   #handleNewEventClick = () => {
-    // this.#clearPointPresenters();
     this.#handleModeChange();
 
     this.#filterModel.setFilter(UpdateType.MAJOR, 'everything');
@@ -183,9 +191,9 @@ export default class TripPresenter {
     this.#newEventButton.disabled = true;
 
     const newPoint = {
-      id: `tmp-${Date.now()}`, // временный id
+      id: `tmp-${Date.now()}`,
       type: this.allTypes[0],
-      destination: this.#tripModel.getDestinations()[0],
+      destination: this.#pointModel.getDestinations()[0],
       dateFrom: new Date(),
       dateTo: new Date(),
       basePrice: 0,
@@ -195,8 +203,8 @@ export default class TripPresenter {
 
     const formComponent = new FormNewPointView({
       point: newPoint,
-      destinations: this.#tripModel.getDestinations(),
-      offers: this.#tripModel.getOffersByType()
+      destinations: this.#pointModel.getDestinations(),
+      offers: this.#pointModel.getOffersByType()
     });
 
     render(formComponent, this.#tripEventsContainer.querySelector('.trip-events__list'), RenderPosition.AFTERBEGIN);
@@ -210,11 +218,17 @@ export default class TripPresenter {
 
 
     formComponent.setFormSubmitHandler(async (point) => {
+      this.#newEventButton.disabled = true;
+      formComponent.updateElement({ isDisabled: true, isSaving: true });
+
       try {
-        await this.#tripModel.addPoint(UpdateType.MINOR, point);
+        await this.#pointModel.addPoint(UpdateType.MINOR, point);
         closeForm();
       } catch (err) {
-        alert('Не удалось добавить точку на сервер');
+        formComponent.shake(() => {
+          formComponent.updateElement({ isDisabled: false, isSaving: false });
+          this.#newEventButton.disabled = false;
+        });
       }
     });
 
@@ -242,6 +256,11 @@ export default class TripPresenter {
   };
 
   #handleModelEvent = (updateType) => {
+    if (!this.#eventListComponent) {
+      this.#eventListComponent = new EventListView();
+      render(this.#eventListComponent, this.#tripEventsContainer);
+    }
+
     switch (updateType) {
       case UpdateType.INIT:
         this.#isLoading = false;

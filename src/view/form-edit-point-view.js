@@ -17,7 +17,10 @@ const createFormEditTemplate = (point, destinations) => {
     type,
     destination,
     availableOffers = [],
-    selectedOffers = []
+    selectedOffers = [],
+    isDisabled = false,
+    isSaving = false,
+    isDeleting = false
   } = point;
 
   const destinationData = destination || null;
@@ -74,8 +77,14 @@ const createFormEditTemplate = (point, destinations) => {
           <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
         </div>
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Delete</button>
+        <button class="event__save-btn btn btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>
+          ${isSaving ? 'Saving...' : 'Save'}
+        </button>
+
+        <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>
+          ${isDeleting ? 'Deleting...' : 'Delete'}
+        </button>
+
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Open event</span>
         </button>
@@ -99,9 +108,8 @@ export default class FormEditPointView extends AbstractStatefulView {
     super();
     this._callback = {};
     this.#destinations = destinations;
-    this.#offers = offers; // здесь передаём весь offersByType
+    this.#offers = offers;
 
-    // найдём офферы для текущего типа точки
     const availableOffers = this.#offers.find((o) => o.type === point.type)?.offers ?? [];
 
     this._setState(FormEditPointView.parsePointToState({
@@ -198,7 +206,6 @@ export default class FormEditPointView extends AbstractStatefulView {
   #handleTypeChange = (evt) => {
     const newType = evt.target.value;
 
-    // ищем офферы по новому типу
     const availableOffers = this.#offers.find((o) => o.type === newType)?.offers ?? [];
 
     this.updateElement({
@@ -252,12 +259,10 @@ export default class FormEditPointView extends AbstractStatefulView {
   #handlePriceInput = (evt) => {
     const value = evt.target.value.trim();
 
-    // если число валидное — сбросить ошибку
     if (/^\d+$/.test(value)) {
       evt.target.setCustomValidity('');
     }
 
-    // обновляем state, но без перерисовки всей формы
     this._setState({
       ...this._state,
       basePrice: value
@@ -304,8 +309,6 @@ export default class FormEditPointView extends AbstractStatefulView {
 
     const pointToSend = this.constructor.parseStateToPoint(finalState);
 
-    console.log('Submitting point to server:', pointToSend);
-
     this._callback.submit?.(pointToSend);
   };
 
@@ -329,6 +332,38 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   setDeleteClickHandler(callback) {
     this._callback.delete = callback;
+  }
+
+  setSaving() {
+    this._setState({
+      ...this._state,
+      isSaving: true,
+      isDisabled: true
+    });
+  }
+
+  setDeleting() {
+    this._setState({
+      ...this._state,
+      isDeleting: true,
+      isDisabled: true
+    });
+  }
+
+  resetSaving() {
+    this._setState({
+      ...this._state,
+      isSaving: false,
+      isDisabled: false
+    });
+  }
+
+  resetDeleting() {
+    this._setState({
+      ...this._state,
+      isDeleting: false,
+      isDisabled: false
+    });
   }
 
   destroy() {

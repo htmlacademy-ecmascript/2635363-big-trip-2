@@ -3,7 +3,7 @@ import Observable from '../framework/observable.js';
 import { UpdateType } from '../consts/update-type.js';
 
 
-export default class TripModel extends Observable {
+export default class PointModel extends Observable {
   #apiService;
   #points = [];
   #destinations = [];
@@ -13,10 +13,6 @@ export default class TripModel extends Observable {
   constructor({ apiService }) {
     super();
     this.#apiService = apiService;
-  }
-
-  get isLoading() {
-    return this.#isLoading;
   }
 
   getPoints() {
@@ -31,20 +27,11 @@ export default class TripModel extends Observable {
     return this.#offersByType;
   }
 
-  // setPoints(updateType, tripPoints) {
-  //   this.#points = [...tripPoints];
-  //   this._notify(updateType);
-  // }
-
   async init() {
     try {
       const offers = await this.#apiService.offers;
       const destinations = await this.#apiService.destinations;
       const points = await this.#apiService.points;
-
-      console.log('offers from server:', offers);
-      console.log('destinations from server:', destinations);
-      console.log('points from server:', points);
 
       this.#offersByType = offers;
       this.#destinations = destinations;
@@ -54,8 +41,6 @@ export default class TripModel extends Observable {
         : [];
 
     } catch (err) {
-      console.error('Ошибка загрузки данных:', err);
-
       this.#points = [];
       this.#offersByType = [];
       this.#destinations = [];
@@ -72,31 +57,31 @@ export default class TripModel extends Observable {
     }
 
     try {
-      // Преобразуем в формат сервера и отправляем PUT-запрос
-      const serverResponse = await this.#apiService.updatePoint(adaptPointToServer(updatedPoint));
+      const adaptedPoint = adaptPointToServer(updatedPoint);
 
-      // Преобразуем обратно в формат клиента с актуальными destinations и offers
+      const serverResponse = await this.#apiService.updatePoint(adaptedPoint);
+
       const newPoint = adaptPointToClient(serverResponse, this.#destinations, this.#offersByType);
 
-      // Обновляем локальный массив
       this.#points = [
         ...this.#points.slice(0, index),
         newPoint,
         ...this.#points.slice(index + 1)
       ];
 
-      // Уведомляем презентер об успешном обновлении
       this._notify(updateType, newPoint);
 
     } catch (err) {
-      // Пробрасываем ошибку, чтобы презентер мог показать shake форму
       throw new Error('Не удалось обновить точку на сервере');
     }
   }
 
   async addPoint(updateType, newPoint) {
     try {
-      const serverResponse = await this.#apiService.addPoint(adaptPointToServer(newPoint));
+      const adaptedPoint = adaptPointToServer(newPoint);
+
+      const serverResponse = await this.#apiService.addPoint(adaptedPoint);
+
       const addedPoint = adaptPointToClient(serverResponse, this.#destinations, this.#offersByType);
 
       this.#points = [addedPoint, ...this.#points];
@@ -117,15 +102,7 @@ export default class TripModel extends Observable {
     }
   }
 
-  getDestinationsById(id) {
-    return this.#destinations.find((dest) => dest.id === id);
-  }
-
   getOffersForType(type) {
     return this.#offersByType.find((offer) => offer.type === type)?.offers ?? [];
-  }
-
-  getOfferById(type, offerId) {
-    return this.getOffersForType(type).find((offer) => offer.id === offerId);
   }
 }

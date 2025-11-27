@@ -8,7 +8,7 @@ import flatpickr from 'flatpickr';
 export default class PointPresenter {
   #point;
   #pointListContainer;
-  #tripModel;
+  #pointModel;
   #pointComponent;
   #pointEditComponent;
   #onDataChange;
@@ -17,9 +17,9 @@ export default class PointPresenter {
   #flatpickrEnd;
   #isEditing = false;
 
-  constructor({ pointListContainer, tripModel, onDataChange, onModeChange }) {
+  constructor({ pointListContainer, pointModel, onDataChange, onModeChange }) {
     this.#pointListContainer = pointListContainer;
-    this.#tripModel = tripModel;
+    this.#pointModel = pointModel;
     this.#onDataChange = onDataChange;
     this.#onModeChange = onModeChange;
   }
@@ -33,13 +33,13 @@ export default class PointPresenter {
     this.#pointComponent = new EventItemView({
       point,
       destination: this.#point.destination,
-      offers: this.#tripModel.getOffersForType(this.#point.type)
+      offers: this.#pointModel.getOffersForType(this.#point.type)
     });
 
     this.#pointEditComponent = new FormEditPointView({
       point,
-      destinations: this.#tripModel.getDestinations(),
-      offers: this.#tripModel.getOffersByType()
+      destinations: this.#pointModel.getDestinations(),
+      offers: this.#pointModel.getOffersByType()
     });
 
     this.#pointComponent.setExpandClickHandler(this.#handleEditClick);
@@ -80,7 +80,7 @@ export default class PointPresenter {
   // ---------- внутренние переходы ----------
   #replaceCardToEdit() {
     replace(this.#pointEditComponent, this.#pointComponent);
-    this.#onModeChange(); // сообщаем TripPresenter закрыть другие
+    this.#onModeChange();
     this.#initFlatpickr();
     this.#addEscHandler();
     this.#isEditing = true;
@@ -113,19 +113,21 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = async (updatePoint) => {
+    this.setSaving();
     try {
       await this.#onDataChange(UserAction.UPDATE_POINT, UpdateType.PATCH, updatePoint);
       this.#replaceEditToCard();
     } catch (err) {
-      alert('Не удалось обновить точку на сервере');
+      this.setAborting();
     }
   };
 
   #handleDeleteClick = async () => {
+    this.setDeleting();
     try {
       await this.#onDataChange(UserAction.DELETE_POINT, UpdateType.MINOR, this.#point.id);
     } catch (err) {
-      alert('Не удалось удалить точку на сервере');
+      this.setAborting();
     }
   };
 
@@ -166,5 +168,31 @@ export default class PointPresenter {
       this.#replaceEditToCard();
     }
   };
+
+  setSaving() {
+    this.#pointEditComponent.updateElement({
+      isSaving: true,
+      isDisabled: true
+    });
+  }
+
+  setDeleting() {
+    this.#pointEditComponent.updateElement({
+      isDeleting: true,
+      isDisabled: true
+    });
+  }
+
+  setAborting() {
+    const resetState = {
+      isSaving: false,
+      isDeleting: false,
+      isDisabled: false
+    };
+
+    this.#pointEditComponent.shake(() => {
+      this.#pointEditComponent.updateElement(resetState);
+    });
+  }
 }
 
