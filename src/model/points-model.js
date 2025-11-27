@@ -3,7 +3,7 @@ import Observable from '../framework/observable.js';
 import { UpdateType } from '../consts/update-type.js';
 
 
-export default class TripModel extends Observable {
+export default class PointModel extends Observable {
   #apiService;
   #points = [];
   #destinations = [];
@@ -13,10 +13,6 @@ export default class TripModel extends Observable {
   constructor({ apiService }) {
     super();
     this.#apiService = apiService;
-  }
-
-  get isLoading() {
-    return this.#isLoading;
   }
 
   getPoints() {
@@ -106,15 +102,7 @@ export default class TripModel extends Observable {
     }
   }
 
-  getDestinationsById(id) {
-    return this.#destinations.find((dest) => dest.id === id);
-  }
-
   getOffersForType(type) {
     return this.#offersByType.find((offer) => offer.type === type)?.offers ?? [];
-  }
-
-  getOfferById(type, offerId) {
-    return this.getOffersForType(type).find((offer) => offer.id === offerId);
   }
 }

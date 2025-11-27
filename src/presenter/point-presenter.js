@@ -8,7 +8,7 @@ import flatpickr from 'flatpickr';
 export default class PointPresenter {
   #point;
   #pointListContainer;
-  #tripModel;
+  #pointModel;
   #pointComponent;
   #pointEditComponent;
   #onDataChange;
@@ -17,9 +17,9 @@ export default class PointPresenter {
   #flatpickrEnd;
   #isEditing = false;
 
-  constructor({ pointListContainer, tripModel, onDataChange, onModeChange }) {
+  constructor({ pointListContainer, pointModel, onDataChange, onModeChange }) {
     this.#pointListContainer = pointListContainer;
-    this.#tripModel = tripModel;
+    this.#pointModel = pointModel;
     this.#onDataChange = onDataChange;
     this.#onModeChange = onModeChange;
   }
@@ -33,13 +33,13 @@ export default class PointPresenter {
     this.#pointComponent = new EventItemView({
       point,
       destination: this.#point.destination,
-      offers: this.#tripModel.getOffersForType(this.#point.type)
+      offers: this.#pointModel.getOffersForType(this.#point.type)
     });
 
     this.#pointEditComponent = new FormEditPointView({
       point,
-      destinations: this.#tripModel.getDestinations(),
-      offers: this.#tripModel.getOffersByType()
+      destinations: this.#pointModel.getDestinations(),
+      offers: this.#pointModel.getOffersByType()
     });
 
     this.#pointComponent.setExpandClickHandler(this.#handleEditClick);
@@ -169,14 +169,6 @@ export default class PointPresenter {
     }
   };
 
-  setFavoriteToggling() {
-    this.#pointComponent.updateElement({ isDisabled: true });
-  }
-
-  unsetFavoriteToggling() {
-    this.#pointComponent.updateElement({ isDisabled: false });
-  }
-
   setSaving() {
     this.#pointEditComponent.updateElement({
       isSaving: true,
@@ -184,24 +176,10 @@ export default class PointPresenter {
     });
   }
 
-  unsetSaving() {
-    this.#pointEditComponent.updateElement({
-      isSaving: false,
-      isDisabled: false
-    });
-  }
-
   setDeleting() {
     this.#pointEditComponent.updateElement({
       isDeleting: true,
       isDisabled: true
-    });
-  }
-
-  unsetDeleting() {
-    this.#pointEditComponent.updateElement({
-      isDeleting: false,
-      isDisabled: false
     });
   }
 

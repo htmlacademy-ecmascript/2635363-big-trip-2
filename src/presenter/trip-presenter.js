@@ -12,7 +12,7 @@ import { UserAction } from '../consts/user-action.js';
 
 export default class TripPresenter {
   #tripEventsContainer;
-  #tripModel;
+  #pointModel;
   #filterModel;
   #eventListComponent = null;
 
@@ -22,20 +22,19 @@ export default class TripPresenter {
   #loadingComponent = null;
   #sortingComponent = null;
   #isLoading = true;
-  #isProcessing = false;
   #newEventButton = null;
   #currentSortType = 'day';
 
   constructor({ tripEventsContainer, pointsModel, filterModel }) {
     this.#tripEventsContainer = tripEventsContainer;
 
-    this.#tripModel = pointsModel;
+    this.#pointModel = pointsModel;
     this.#filterModel = filterModel;
 
-    this.#tripModel.addObserver(this.#handleModelEvent);
+    this.#pointModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
 
-    this.allTypes = this.#tripModel.getOffersByType().map((offer) => offer.type);
+    this.allTypes = this.#pointModel.getOffersByType().map((offer) => offer.type);
 
     this.#onEscCloseNewForm = this.#onEscCloseNewForm.bind(this);
   }
@@ -59,7 +58,7 @@ export default class TripPresenter {
 
   #getFilteredSortedPoints() {
     const currentFilter = this.#filterModel.filter;
-    const allPoints = this.#tripModel.getPoints();
+    const allPoints = this.#pointModel.getPoints();
     const filtered = filterPoints(allPoints, currentFilter);
     return sortPoints(filtered, this.#currentSortType);
   }
@@ -70,12 +69,6 @@ export default class TripPresenter {
     const listContainer = this.#eventListComponent.element;
 
     if (this.#isLoading) {
-      this.#loadingComponent = new LoadingView();
-      render(this.#loadingComponent, listContainer);
-      return;
-    }
-
-    if (this.#isProcessing) {
       this.#loadingComponent = new LoadingView();
       render(this.#loadingComponent, listContainer);
       return;
@@ -95,7 +88,7 @@ export default class TripPresenter {
   #renderPoint(container, point) {
     const pointPresenter = new PointPresenter({
       pointListContainer: container,
-      tripModel: this.#tripModel,
+      pointModel: this.#pointModel,
       onDataChange: this.#handlePointChange,
       onModeChange: this.#handleModeChange
     });
@@ -148,7 +141,7 @@ export default class TripPresenter {
     switch (action) {
       case UserAction.UPDATE_POINT: {
         try {
-          await this.#tripModel.updatePoint(updateType, payload);
+          await this.#pointModel.updatePoint(updateType, payload);
         } catch (err) {
           const presenter = this.#pointPresenters.get(payload.id);
           presenter?.setAborting();
@@ -158,7 +151,7 @@ export default class TripPresenter {
 
       case UserAction.ADD_POINT: {
         try {
-          await this.#tripModel.addPoint(updateType, payload);
+          await this.#pointModel.addPoint(updateType, payload);
         } catch (err) {
           throw new Error('Не удалось добавить точку на сервер');
         }
@@ -167,7 +160,7 @@ export default class TripPresenter {
 
       case UserAction.DELETE_POINT: {
         try {
-          await this.#tripModel.deletePoint(updateType, payload);
+          await this.#pointModel.deletePoint(updateType, payload);
         } catch (err) {
           const presenter = this.#pointPresenters.get(payload);
           presenter?.setAborting();
@@ -200,7 +193,7 @@ export default class TripPresenter {
     const newPoint = {
       id: `tmp-${Date.now()}`,
       type: this.allTypes[0],
-      destination: this.#tripModel.getDestinations()[0],
+      destination: this.#pointModel.getDestinations()[0],
       dateFrom: new Date(),
       dateTo: new Date(),
       basePrice: 0,
@@ -210,8 +203,8 @@ export default class TripPresenter {
 
     const formComponent = new FormNewPointView({
       point: newPoint,
-      destinations: this.#tripModel.getDestinations(),
-      offers: this.#tripModel.getOffersByType()
+      destinations: this.#pointModel.getDestinations(),
+      offers: this.#pointModel.getOffersByType()
     });
 
     render(formComponent, this.#tripEventsContainer.querySelector('.trip-events__list'), RenderPosition.AFTERBEGIN);
@@ -229,7 +222,7 @@ export default class TripPresenter {
       formComponent.updateElement({ isDisabled: true, isSaving: true });
 
       try {
-        await this.#tripModel.addPoint(UpdateType.MINOR, point);
+        await this.#pointModel.addPoint(UpdateType.MINOR, point);
         closeForm();
       } catch (err) {
         formComponent.shake(() => {
