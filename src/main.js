@@ -1,7 +1,7 @@
 import TripPresenter from './presenter/trip-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import FilterModel from './model/filter-model.js';
-import TripModel from './model/points-model.js';
+import PointModel from './model/points-model.js';
 import TripApiService from './point-api-service/trip-api-service.js';
 
 const AUTHORIZATION = 'Basic auth12345qwerty';
@@ -12,24 +12,24 @@ const tripEventsContainer = document.querySelector('.trip-events');
 
 const apiService = new TripApiService(END_POINT, AUTHORIZATION);
 
-const tripModel = new TripModel({ apiService });
+const pointModel = new PointModel({ apiService });
 
 const filterModel = new FilterModel();
 
 const tripPresenter = new TripPresenter({
   tripControlsContainer,
   tripEventsContainer,
-  pointsModel: tripModel,
+  pointsModel: pointModel,
   filterModel
 });
 
 const filterPresenter = new FilterPresenter({
   filterContainer: tripControlsContainer,
   filterModel,
-  pointsModel: tripModel
+  pointsModel: pointModel
 });
 
-tripModel.init().finally(() => {
-  tripPresenter.init();
+tripPresenter.init();
+pointModel.init().finally(() => {
   filterPresenter.init();
 });
