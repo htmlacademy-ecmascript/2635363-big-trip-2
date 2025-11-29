@@ -177,11 +177,11 @@ export default class TripPresenter {
   #initNewEventButton() {
     this.#newEventButton = document.querySelector('.trip-main__event-add-btn');
     if (this.#newEventButton) {
-      this.#newEventButton.addEventListener('click', this.#handleNewEventClick);
+      this.#newEventButton.addEventListener('click', this.#onNewEventButtonClick);
     }
   }
 
-  #handleNewEventClick = () => {
+  #onNewEventButtonClick = () => {
     this.#handleModeChange();
 
     this.#filterModel.setFilter(UpdateType.MAJOR, 'everything');

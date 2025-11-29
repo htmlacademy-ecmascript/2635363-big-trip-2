@@ -334,38 +334,6 @@ export default class FormEditPointView extends AbstractStatefulView {
     this._callback.delete = callback;
   }
 
-  setSaving() {
-    this._setState({
-      ...this._state,
-      isSaving: true,
-      isDisabled: true
-    });
-  }
-
-  setDeleting() {
-    this._setState({
-      ...this._state,
-      isDeleting: true,
-      isDisabled: true
-    });
-  }
-
-  resetSaving() {
-    this._setState({
-      ...this._state,
-      isSaving: false,
-      isDisabled: false
-    });
-  }
-
-  resetDeleting() {
-    this._setState({
-      ...this._state,
-      isDeleting: false,
-      isDisabled: false
-    });
-  }
-
   destroy() {
     this.removeElement();
 
