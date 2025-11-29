@@ -29,7 +29,7 @@ const filterPresenter = new FilterPresenter({
   pointsModel: pointModel
 });
 
+tripPresenter.init();
 pointModel.init().finally(() => {
-  tripPresenter.init();
   filterPresenter.init();
 });
