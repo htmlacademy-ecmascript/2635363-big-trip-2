@@ -1,6 +1,6 @@
 import SortingView from '../view/sorting-view.js';
 import EventListView from '../view/event-list-view.js';
-import FormNewPointView from '../view/add-new-point-view.js';
+import FormNewPointView from '../view/form-new-point-view.js';
 import ListEmptyView from '../view/list-empty-view.js';
 import LoadingView from '../view/loading-view.js';
 import { remove, render, RenderPosition } from '../framework/render.js';
@@ -193,9 +193,9 @@ export default class TripPresenter {
     const newPoint = {
       id: `tmp-${Date.now()}`,
       type: this.allTypes[0],
-      destination: this.#pointModel.getDestinations()[0],
-      dateFrom: new Date(),
-      dateTo: new Date(),
+      destination: null,
+      dateFrom: null,
+      dateTo: null,
       basePrice: 0,
       offers: [],
       isFavorite: false

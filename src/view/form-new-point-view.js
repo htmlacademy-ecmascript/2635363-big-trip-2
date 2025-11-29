@@ -180,22 +180,22 @@ export default class FormNewPointView extends AbstractStatefulView {
   _restoreHandlers() {
 
     this.element.querySelector('form')
-      ?.addEventListener('submit', this.#handleFormSubmit);
+      ?.addEventListener('submit', this.#onFormSubmit);
 
     this.element.querySelector('.event__reset-btn')
-      ?.addEventListener('click', this.#handleCancelClick);
+      ?.addEventListener('click', this.#onResetButtonClick);
 
     this.element.querySelectorAll('.event__type-input')
       .forEach((radioInput) => {
-        radioInput.addEventListener('change', this.#handleTypeChange);
+        radioInput.addEventListener('change', this.#onTypeInputChange);
       });
     this.element.querySelector('.event__input--destination')
-      ?.addEventListener('change', this.#handleDestinationChange);
+      ?.addEventListener('change', this.#onDestinationInputChange);
     this.element.querySelector('.event__input--price')
-      ?.addEventListener('input', this.#handlePriceInput);
+      ?.addEventListener('input', this.#onPriceInput);
 
     this.element.querySelectorAll('.event__offer-checkbox')
-      .forEach((cb) => cb.addEventListener('change', this.#handleOfferToggle));
+      .forEach((cb) => cb.addEventListener('change', this.#onOfferCheckboxChange));
 
     this.#setDatePickers();
   }
@@ -234,7 +234,7 @@ export default class FormNewPointView extends AbstractStatefulView {
     }
   }
 
-  #handleTypeChange = (evt) => {
+  #onTypeInputChange = (evt) => {
 
     const newType = evt.target.value;
     const availableOffers = this.#offers.find((o) => o.type === newType)?.offers ?? [];
@@ -246,7 +246,7 @@ export default class FormNewPointView extends AbstractStatefulView {
     });
   };
 
-  #handleDestinationChange = (evt) => {
+  #onDestinationInputChange = (evt) => {
     const newDestinationName = evt.target.value;
 
     const newDestination = this.#destinations.find((destination) => destination.name === newDestinationName);
@@ -260,7 +260,7 @@ export default class FormNewPointView extends AbstractStatefulView {
     });
   };
 
-  #handleOfferToggle = (evt) => {
+  #onOfferCheckboxChange = (evt) => {
     const checkbox = evt.target;
     const offerId = checkbox.dataset.offerId ?? checkbox.id.replace('event-offer-', '');
     const current = new Set(this._state.selectedOffers);
@@ -288,7 +288,7 @@ export default class FormNewPointView extends AbstractStatefulView {
     });
   };
 
-  #handlePriceInput = (evt) => {
+  #onPriceInput = (evt) => {
     const value = evt.target.value.trim();
 
     if (/^\d+$/.test(value)) {
@@ -301,7 +301,7 @@ export default class FormNewPointView extends AbstractStatefulView {
     });
   };
 
-  #handleFormSubmit = (evt) => {
+  #onFormSubmit = (evt) => {
     evt.preventDefault();
 
     const form = this.element.querySelector('form');
@@ -349,7 +349,7 @@ export default class FormNewPointView extends AbstractStatefulView {
     this._callback.close = callback;
   }
 
-  #handleCancelClick = (evt) => {
+  #onResetButtonClick = (evt) => {
     evt.preventDefault();
     this._callback.cancel?.();
   };
