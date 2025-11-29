@@ -6,11 +6,11 @@ export const filterPoints = (points, filterType) => {
     case 'everything':
       return points;
     case 'future':
-      return points.filter((p) => new Date(p.dateFrom) > now);
+      return points.filter((point) => new Date(point.dateFrom) > now);
     case 'present':
-      return points.filter((p) => new Date(p.dateFrom) <= now && new Date(p.dateTo) >= now);
+      return points.filter((point) => new Date(point.dateFrom) <= now && new Date(point.dateTo) >= now);
     case 'past':
-      return points.filter((p) => new Date(p.dateTo) < now);
+      return points.filter((point) => new Date(point.dateTo) < now);
     default:
       return points;
   }
@@ -19,13 +19,13 @@ export const filterPoints = (points, filterType) => {
 export const sortPoints = (points, sortType) => {
   switch (sortType) {
     case 'day':
-      return points.slice().sort((a, b) => new Date(a.dateFrom) - new Date(b.dateFrom));
+      return points.slice().sort((firstPoint, secondPoint) => new Date(firstPoint.dateFrom) - new Date(secondPoint.dateFrom));
     case 'time': {
-      const getDuration = (p) => new Date(p.dateTo) - new Date(p.dateFrom);
-      return points.slice().sort((a, b) => getDuration(b) - getDuration(a));
+      const getDuration = (point) => new Date(point.dateTo) - new Date(point.dateFrom);
+      return points.slice().sort((firstPoint, secondPoint) => getDuration(secondPoint) - getDuration(firstPoint));
     }
     case 'price':
-      return points.slice().sort((a, b) => b.basePrice - a.basePrice);
+      return points.slice().sort((firstPoint, secondPoint) => secondPoint.basePrice - firstPoint.basePrice);
     default:
       return points;
   }
