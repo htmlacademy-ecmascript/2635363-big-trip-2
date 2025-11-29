@@ -6,6 +6,7 @@ import TripApiService from './point-api-service/trip-api-service.js';
 
 const AUTHORIZATION = 'Basic auth12345qwerty';
 const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip';
+// const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip123';
 
 const tripControlsContainer = document.querySelector('.trip-controls__filters');
 const tripEventsContainer = document.querySelector('.trip-events');

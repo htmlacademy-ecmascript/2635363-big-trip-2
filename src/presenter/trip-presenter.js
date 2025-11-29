@@ -3,6 +3,7 @@ import EventListView from '../view/event-list-view.js';
 import FormNewPointView from '../view/form-new-point-view.js';
 import ListEmptyView from '../view/list-empty-view.js';
 import LoadingView from '../view/loading-view.js';
+import NetworkErrorView from '../view/network-error-view.js';
 import { remove, render, RenderPosition } from '../framework/render.js';
 import PointPresenter from './point-presenter.js';
 import { filterPoints, sortPoints } from '../utils/points.js';
@@ -264,6 +265,14 @@ export default class TripPresenter {
     switch (updateType) {
       case UpdateType.INIT:
         this.#isLoading = false;
+
+        if (this.#pointModel.hasNetworkError) {
+          this.#clearEventsContainer();
+          const errorView = new NetworkErrorView();
+          render(errorView, this.#eventListComponent.element);
+          return;
+        }
+
         this.#clearPointPresenters();
         this.#renderEventsList();
         break;
