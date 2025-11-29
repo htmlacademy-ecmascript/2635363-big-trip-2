@@ -116,8 +116,8 @@ export default class FormNewPointView extends AbstractStatefulView {
     this._setState(FormNewPointView.parsePointToState({
       ...point,
       type: initialType,
-      dateFrom: point.dateFrom ?? new Date(),
-      dateTo: point.dateTo ?? new Date(),
+      dateFrom: point.dateFrom ?? null,
+      dateTo: point.dateTo ?? null,
       availableOffers,
       selectedOffers: point.offers ?? []
     }));
@@ -132,8 +132,8 @@ export default class FormNewPointView extends AbstractStatefulView {
       ...point,
       type: defaultType,
       destination: point.destination ?? null,
-      dateFrom: point.dateFrom ?? new Date(),
-      dateTo: point.dateTo ?? new Date(),
+      dateFrom: point.dateFrom ?? null,
+      dateTo: point.dateTo ?? null,
       basePrice: point.basePrice ?? 0,
       isFavorite: point.isFavorite ?? false,
       availableOffers: point.availableOffers,
@@ -219,7 +219,7 @@ export default class FormNewPointView extends AbstractStatefulView {
       this.#datePickerFrom = flatpickr(startInput, {
         enableTime: true,
         dateFormat: 'd/m/y H:i',
-        defaultDate: this._state.dateFrom ?? new Date(),
+        defaultDate: this._state.dateFrom ?? null,
         onChange: this.#handleDateFromChange,
       });
     }
@@ -228,7 +228,7 @@ export default class FormNewPointView extends AbstractStatefulView {
       this.#datePickerTo = flatpickr(endInput, {
         enableTime: true,
         dateFormat: 'd/m/y H:i',
-        defaultDate: this._state.dateTo ?? new Date(),
+        defaultDate: this._state.dateTo ?? null,
         onChange: this.#handleDateToChange,
       });
     }
@@ -356,38 +356,6 @@ export default class FormNewPointView extends AbstractStatefulView {
 
   setCancelClickHandler(callback) {
     this._callback.cancel = callback;
-  }
-
-  setSaving() {
-    this._setState({
-      ...this._state,
-      isSaving: true,
-      isDisabled: true
-    });
-  }
-
-  setDeleting() {
-    this._setState({
-      ...this._state,
-      isDeleting: true,
-      isDisabled: true
-    });
-  }
-
-  resetSaving() {
-    this._setState({
-      ...this._state,
-      isSaving: false,
-      isDisabled: false
-    });
-  }
-
-  resetDeleting() {
-    this._setState({
-      ...this._state,
-      isDeleting: false,
-      isDisabled: false
-    });
   }
 
   destroy() {

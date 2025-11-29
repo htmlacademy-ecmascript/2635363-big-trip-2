@@ -9,6 +9,7 @@ export default class PointModel extends Observable {
   #destinations = [];
   #offersByType = [];
   #isLoading = true;
+  hasNetworkError = false;
 
   constructor({ apiService }) {
     super();
@@ -44,6 +45,8 @@ export default class PointModel extends Observable {
       this.#points = [];
       this.#offersByType = [];
       this.#destinations = [];
+
+      this.hasNetworkError = true;
     }
 
     this.#isLoading = false;

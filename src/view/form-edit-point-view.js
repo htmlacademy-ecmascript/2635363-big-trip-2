@@ -164,7 +164,7 @@ export default class FormEditPointView extends AbstractStatefulView {
       ?.addEventListener('input', this.#onPriceInput);
 
     this.element.querySelectorAll('.event__offer-checkbox')
-      .forEach((cb) => cb.addEventListener('change', this.#handleOfferToggle));
+      .forEach((cb) => cb.addEventListener('change', this.#onOfferCheckboxChange));
 
     this.#setDatePickers();
   }
@@ -228,7 +228,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     });
   };
 
-  #handleOfferToggle = (evt) => {
+  #onOfferCheckboxChange = (evt) => {
     const checkbox = evt.target;
     const offerId = checkbox.dataset.offerId ?? checkbox.id.replace('event-offer-', '');
     const current = new Set(this._state.selectedOffers);
@@ -332,38 +332,6 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   setDeleteClickHandler(callback) {
     this._callback.delete = callback;
-  }
-
-  setSaving() {
-    this._setState({
-      ...this._state,
-      isSaving: true,
-      isDisabled: true
-    });
-  }
-
-  setDeleting() {
-    this._setState({
-      ...this._state,
-      isDeleting: true,
-      isDisabled: true
-    });
-  }
-
-  resetSaving() {
-    this._setState({
-      ...this._state,
-      isSaving: false,
-      isDisabled: false
-    });
-  }
-
-  resetDeleting() {
-    this._setState({
-      ...this._state,
-      isDeleting: false,
-      isDisabled: false
-    });
   }
 
   destroy() {

@@ -29,7 +29,7 @@ function createFilterTemplate(currentFilter) {
 }
 
 export default class FilterView extends AbstractView {
-  #currentFiler;
+
 
   constructor({ currentFilter }) {
     super();
@@ -45,12 +45,6 @@ export default class FilterView extends AbstractView {
       if (evt.target.name === 'trip-filter') {
         callback(evt.target.value);
       }
-    });
-  }
-
-  setCurrentFilter(filter) {
-    this.element.querySelectorAll('input[name="trip-filter"]').forEach((input) => {
-      input.checked = input.value === filter;
     });
   }
 }
