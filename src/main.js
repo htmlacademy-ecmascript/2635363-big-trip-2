@@ -1,7 +1,7 @@
 import TripPresenter from './presenter/trip-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import FilterModel from './model/filter-model.js';
-import PointModel from './model/points-model.js';
+import PointModel from './model/point-model.js';
 import TripApiService from './point-api-service/trip-api-service.js';
 
 const AUTHORIZATION = 'Basic auth12345qwerty';
@@ -29,7 +29,7 @@ const filterPresenter = new FilterPresenter({
   pointsModel: pointModel
 });
 
-tripPresenter.init();
 pointModel.init().finally(() => {
+  tripPresenter.init();
   filterPresenter.init();
 });

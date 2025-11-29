@@ -146,22 +146,22 @@ export default class FormEditPointView extends AbstractStatefulView {
 
   _restoreHandlers() {
     this.element.querySelector('.event__rollup-btn')
-      ?.addEventListener('click', this.#handleCloseClick);
+      ?.addEventListener('click', this.#onRollupButtonClick);
 
     this.element.querySelector('form')
-      ?.addEventListener('submit', this.#handleFormSubmit);
+      ?.addEventListener('submit', this.#onFormSubmit);
 
     this.element.querySelector('.event__reset-btn')
-      ?.addEventListener('click', this.#handleDeleteClick);
+      ?.addEventListener('click', this.#onResetButtonClick);
 
     this.element.querySelectorAll('.event__type-input')
       .forEach((radioInput) => {
-        radioInput.addEventListener('change', this.#handleTypeChange);
+        radioInput.addEventListener('change', this.#onTypeInputChange);
       });
     this.element.querySelector('.event__input--destination')
-      ?.addEventListener('change', this.#handleDestinationChange);
+      ?.addEventListener('change', this.#onDestinationInputChange);
     this.element.querySelector('.event__input--price')
-      ?.addEventListener('input', this.#handlePriceInput);
+      ?.addEventListener('input', this.#onPriceInput);
 
     this.element.querySelectorAll('.event__offer-checkbox')
       .forEach((cb) => cb.addEventListener('change', this.#handleOfferToggle));
@@ -203,7 +203,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     }
   }
 
-  #handleTypeChange = (evt) => {
+  #onTypeInputChange = (evt) => {
     const newType = evt.target.value;
 
     const availableOffers = this.#offers.find((o) => o.type === newType)?.offers ?? [];
@@ -215,7 +215,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     });
   };
 
-  #handleDestinationChange = (evt) => {
+  #onDestinationInputChange = (evt) => {
     const newDestinationName = evt.target.value;
     const newDestination = this.#destinations.find((destination) => destination.name === newDestinationName);
 
@@ -256,7 +256,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     });
   };
 
-  #handlePriceInput = (evt) => {
+  #onPriceInput = (evt) => {
     const value = evt.target.value.trim();
 
     if (/^\d+$/.test(value)) {
@@ -269,7 +269,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     });
   };
 
-  #handleFormSubmit = (evt) => {
+  #onFormSubmit = (evt) => {
     evt.preventDefault();
 
     const form = this.element.querySelector('form');
@@ -316,7 +316,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     this._callback.submit = callback;
   }
 
-  #handleCloseClick = (evt) => {
+  #onRollupButtonClick = (evt) => {
     evt.preventDefault();
     this._callback.close?.();
   };
@@ -325,7 +325,7 @@ export default class FormEditPointView extends AbstractStatefulView {
     this._callback.close = callback;
   }
 
-  #handleDeleteClick = (evt) => {
+  #onResetButtonClick = (evt) => {
     evt.preventDefault();
     this._callback.delete?.();
   };
